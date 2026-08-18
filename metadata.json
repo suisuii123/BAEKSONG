@@ -1,0 +1,6 @@
+{
+  "name": "Baeksong ENG",
+  "description": "반도체 장비 메탈 부품 초정밀 가공 전문기업 (주)백송이엔지 공식 기업 웹사이트 & CMS 시스템",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
