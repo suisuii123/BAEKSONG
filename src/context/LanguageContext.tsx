@@ -77,7 +77,14 @@ export interface Translations {
     filterAll: string;
     matLabel: string;
     tolLabel: string;
+    plLabel: string;
+    pnLabel: string;
+    makerLabel: string;
     specTitle: string;
+    searchPlaceholder: string;
+    searchCount: string;
+    noResults: string;
+    resetSearch: string;
   };
   news: {
     title: string;
@@ -145,7 +152,7 @@ export const translations: Record<Language, Translations> = {
       orgchart: '조직도',
       equipment: '설비현황',
       products: '제품',
-      contact: '찾아오시는 길 & 견적요청',
+      contact: '찾아오시는 길',
     },
     header: {
       requestQuote: '이메일 상담',
@@ -173,7 +180,7 @@ export const translations: Record<Language, Translations> = {
     about: {
       badge: 'COMPANY OVERVIEW',
       title: '고객의 신뢰를 바탕으로 성장하는 정밀 가공 파트너',
-      subtitle: '(주)백송이엔지는 1998년 설립 이래, 대한민국 첨단 반도체 및 디스플레이 산업의 성장을 지탱해 온 메탈 부품 초정밀 가공 전문 제조기업입니다.',
+      subtitle: '',
       ceoTitle: 'CEO 메시지 및 인사말',
       quote: 'Micron 1㎛의 차이가 반도체 수율과 품질의 성패를 가릅니다. 백송이엔지는 단 하나의 부품도 타협하지 않는 집념으로 고객의 기술 혁신을 완벽히 지원합니다.',
       p1: '저희 (주)백송이엔지는 반도체 및 디스플레이 핵심 공정에 투입되는 Chamber, Plate, Lid, Diffuser 등 극도의 정밀도가 요구되는 메탈 부품 수주 가공 전문기업입니다.',
@@ -212,7 +219,14 @@ export const translations: Record<Language, Translations> = {
       filterAll: '전체 부품',
       matLabel: '가공 소재:',
       tolLabel: '보증 공차:',
+      plLabel: 'P/N:',
+      pnLabel: 'P/N:',
+      makerLabel: 'MAKER:',
       specTitle: '제품 가공 스펙',
+      searchPlaceholder: '품번(P/N), 제품명, 제조사를 입력하세요 (예: 0020-34694)',
+      searchCount: '개의 부품 검색됨',
+      noResults: '일치하는 부품이 없습니다.',
+      resetSearch: '검색 초기화',
     },
     news: {
       title: '소식 및 기술 자료',
@@ -222,8 +236,8 @@ export const translations: Record<Language, Translations> = {
       views: '조회수',
     },
     contact: {
-      title: '찾아오시는 길 & 이메일 도면 견적 요청',
-      subtitle: '도면 파일(DWG, STEP, PDF, ZIP)을 올려주시면 엔지니어가 검토 후 이메일/전화로 견적서를 보내드립니다.',
+      title: '찾아오시는 길',
+      subtitle: '(주)백송이엔지 본사 및 제1공장, 제2공장 위치 안내',
       address: '주소',
       phone: '전화번호',
       fax: '팩스번호',
@@ -239,7 +253,7 @@ export const translations: Record<Language, Translations> = {
       fileAttach: '가공 도면 파일 첨부 (DWG, STEP, PDF, ZIP)',
       fileHint: '클릭하여 파일 선택 또는 드래그 앤 드롭',
       message: '요청 사항 및 수량/재질 세부 설명',
-      submitBtn: '이메일로 파일 첨부 견적 요청 보내기',
+      submitBtn: '이메일 전송',
       successMsg: '도면 파일 및 견적 요청서가 이메일(kcyexr@naver.com)로 접수되었습니다!',
     },
     quoteModal: {
@@ -255,7 +269,7 @@ export const translations: Record<Language, Translations> = {
       fileLabel: '가공 도면 파일 업로드 (DWG, STEP, PDF, ZIP) *',
       fileHint: '도면 파일(DWG, STEP, PDF, ZIP)을 클릭하여 첨부하세요',
       messageLabel: '요청 사항 및 기타 참고 정보',
-      submitBtn: 'kcyexr@naver.com 이메일로 견적 요청 전송',
+      submitBtn: '이메일 전송',
       successTitle: '도면 파일 및 견적 요청이 이메일로 전송되었습니다!',
       successDesc: '담당 엔지니어가 제출해주신 도면을 검토한 후 입력하신 이메일/연락처로 정식 견적서를 발송해 드립니다.',
     },
@@ -278,7 +292,7 @@ export const translations: Record<Language, Translations> = {
       orgchart: 'Org Chart',
       equipment: 'Equipment',
       products: 'Products',
-      contact: 'Location & Quote',
+      contact: 'Location',
     },
     header: {
       requestQuote: 'Email Consultation',
@@ -306,7 +320,7 @@ export const translations: Record<Language, Translations> = {
     about: {
       badge: 'COMPANY OVERVIEW',
       title: 'Precision Machining Partner Growing on Customer Trust',
-      subtitle: 'Since its establishment in 1998, BAEKSONG ENG has been a specialized manufacturer of ultra-precision metal components supporting the semiconductor and display industries.',
+      subtitle: '',
       ceoTitle: 'CEO Message & Greeting',
       quote: 'A single 1㎛ Micron difference determines semiconductor yield and quality. BAEKSONG ENG supports your technological innovation without compromising on any single part.',
       p1: 'BAEKSONG ENG is a specialized manufacturer of high-precision metal parts required in core semiconductor and display processes, including Chambers, Plates, Lids, and Diffusers.',
@@ -345,7 +359,14 @@ export const translations: Record<Language, Translations> = {
       filterAll: 'All Parts',
       matLabel: 'Material:',
       tolLabel: 'Tolerance:',
+      plLabel: 'P/N:',
+      pnLabel: 'P/N:',
+      makerLabel: 'MAKER:',
       specTitle: 'Machining Specifications',
+      searchPlaceholder: 'Search by Part Number (P/N), Title, or Maker (e.g. 0020-34694)',
+      searchCount: 'parts found',
+      noResults: 'No matching parts found.',
+      resetSearch: 'Reset search',
     },
     news: {
       title: 'News & Technical Resources',
@@ -355,8 +376,8 @@ export const translations: Record<Language, Translations> = {
       views: 'Views',
     },
     contact: {
-      title: 'Location & Email Drawing Quote Request',
-      subtitle: 'Upload your drawing file (DWG, STEP, PDF, ZIP) and our engineers will send you a formal quotation via email or phone.',
+      title: 'Location & Factory',
+      subtitle: 'BAEKSONG ENG Headquarters and Manufacturing Plants Location Map',
       address: 'Address',
       phone: 'Phone',
       fax: 'Fax',
@@ -372,7 +393,7 @@ export const translations: Record<Language, Translations> = {
       fileAttach: 'Attach Drawing File (DWG, STEP, PDF, ZIP)',
       fileHint: 'Click to select drawing file or drag and drop',
       message: 'Requirements, Quantity & Material Details',
-      submitBtn: 'Send Quote Request with File via Email',
+      submitBtn: 'Send Email',
       successMsg: 'Your drawing file and quote request have been received via email (kcyexr@naver.com)!',
     },
     quoteModal: {
@@ -388,7 +409,7 @@ export const translations: Record<Language, Translations> = {
       fileLabel: 'Upload Drawing File (DWG, STEP, PDF, ZIP) *',
       fileHint: 'Click to upload drawing file (DWG, STEP, PDF, ZIP)',
       messageLabel: 'Additional Notes & Instructions',
-      submitBtn: 'Send Quote Request to kcyexr@naver.com',
+      submitBtn: 'Send Email',
       successTitle: 'Drawing file and quote request sent via email!',
       successDesc: 'Our engineers will review your drawing and send a formal quotation to your email and phone number.',
     },
@@ -405,13 +426,13 @@ export const translations: Record<Language, Translations> = {
     },
   },
   CN: {
-    companyName: '白松工程技术',
+    companyName: 'BAEKSONG ENG',
     nav: {
       about: '公司介绍',
       orgchart: '组织架构',
       equipment: '设备状况',
       products: '产品',
-      contact: '联系 & 询价',
+      contact: '交通指南',
     },
     header: {
       requestQuote: '邮件咨询',
@@ -421,7 +442,7 @@ export const translations: Record<Language, Translations> = {
     hero: {
       badge: '半导体设备金属零部件超精密加工领军企业',
       heading1: '超越超精密加工极限的技术实力,',
-      subHeading: '专攻半导体设备金属零部件超精密加工。白松工程技术 具备先进的精密加工设备与严谨的质量管理，提供从核心部件(Chamber, Plate, Lid, Diffuser)加工到阳极氧化表面处理的整体解决方案。',
+      subHeading: '专攻半导体设备金属零部件超精密加工。BAEKSONG ENG 具备先进的精密加工设备与严谨的质量管理，提供从核心部件(Chamber, Plate, Lid, Diffuser)加工到阳极氧化表面处理的整体解决方案。',
       quoteBtn: '邮件附带图纸报价申请',
       equipmentBtn: '查看设备清单',
       guarantee1: '提供微米(㎛)级 3D CMM 全检报告',
@@ -439,12 +460,12 @@ export const translations: Record<Language, Translations> = {
     about: {
       badge: 'COMPANY OVERVIEW',
       title: '依托客户信任不断成长的精密加工合作伙伴',
-      subtitle: '自 1998 年成立以来，白松工程技术 始终是支撑韩国先进半导体及显示屏产业发展的金属零部件超精密加工专业制造企业。',
+      subtitle: '',
       ceoTitle: 'CEO 寄语与致辞',
-      quote: '1㎛ 微米的微小差异决定着半导体良率与品质的成败。白松工程技术 绝不妥协任何一件产品，全力支持客户的技术创新。',
-      p1: '白松工程技术 是一家专注于半导体及显示屏核心工艺（如 Chamber, Plate, Lid, Diffuser）极高精度金属零部件加工的制造企业。',
-      p2: '依托位于仁川南洞工业园第一及第二工厂的斗山(DOOSAN) MCT 最新精密加工设备、系统化的品质管理部与研发部门，白松工程技术 完美实现从加工到阳极氧化表面处理的封环生产。',
-      intro: '白松工程技术 凭借最先进的加工设备和严密品质体系，稳定供应半导体设备核心金属部件。',
+      quote: '1㎛ 微米的微小差异决定着半导体良率与品质的成败。BAEKSONG ENG 绝不妥协任何一件产品，全力支持客户的技术创新。',
+      p1: 'BAEKSONG ENG 是一家专注于半导体及显示屏核心工艺（如 Chamber, Plate, Lid, Diffuser）极高精度金属零部件加工的制造企业。',
+      p2: '依托位于仁川南洞工业园第一及第二工厂的斗山(DOOSAN) MCT 最新精密加工设备、系统化的品质管理部与研发部门，BAEKSONG ENG 完美实现从加工到阳极氧化表面处理的封环生产。',
+      intro: 'BAEKSONG ENG 凭借最先进的加工设备和严密品质体系，稳定供应半导体设备核心金属部件。',
       stat1: '成立年份',
       stat2: '第一·第二工厂',
       stat3: '质量目标',
@@ -478,7 +499,14 @@ export const translations: Record<Language, Translations> = {
       filterAll: '全部零部件',
       matLabel: '加工材质:',
       tolLabel: '保证公差:',
+      plLabel: 'P/N:',
+      pnLabel: 'P/N:',
+      makerLabel: 'MAKER:',
       specTitle: '产品加工规格',
+      searchPlaceholder: '按零件号(P/N)、产品名称或制造厂商搜索 (例: 0020-34694)',
+      searchCount: '个零部件被检索到',
+      noResults: '未找到匹配的零部件。',
+      resetSearch: '重置搜索',
     },
     news: {
       title: '新闻与技术资料',
@@ -488,8 +516,8 @@ export const translations: Record<Language, Translations> = {
       views: '浏览次数',
     },
     contact: {
-      title: '联系地址 & 邮件附带图纸报价申请',
-      subtitle: '上传您的图纸文件(DWG, STEP, PDF, ZIP)，工程师审核后将通过邮件/电话向您发送正式报价单。',
+      title: '交通指南',
+      subtitle: 'BAEKSONG ENG 总部及第一工厂、第二工厂位置指南',
       address: '地址',
       phone: '电话',
       fax: '传真',
@@ -505,7 +533,7 @@ export const translations: Record<Language, Translations> = {
       fileAttach: '上传加工图纸文件 (DWG, STEP, PDF, ZIP)',
       fileHint: '点击选择图纸文件或拖拽上传',
       message: '需求说明/数量/材质等详细说明',
-      submitBtn: '通过邮件发送图纸报价申请',
+      submitBtn: '发送邮件',
       successMsg: '图纸文件及报价申请已成功通过邮件(kcyexr@naver.com)接收！',
     },
     quoteModal: {
@@ -521,7 +549,7 @@ export const translations: Record<Language, Translations> = {
       fileLabel: '上传加工图纸 (DWG, STEP, PDF, ZIP) *',
       fileHint: '点击上传图纸文件(DWG, STEP, PDF, ZIP)',
       messageLabel: '备注与说明',
-      submitBtn: '发送报价申请至 kcyexr@naver.com',
+      submitBtn: '发送邮件',
       successTitle: '图纸文件及报价申请已通过邮件发送！',
       successDesc: '工程师审阅图纸后，将通过您留下的邮箱和电话联系并发送正式报价单。',
     },

@@ -134,17 +134,6 @@ export const Header: React.FC = () => {
               <Share2 className="w-4 h-4 text-[#2BB8A1]" />
             </button>
 
-            {/* Admin CMS Modal Trigger */}
-            <button
-              id="header-admin-btn"
-              onClick={() => setIsAdminOpen(true)}
-              className="px-3 py-2 rounded-xl bg-teal-50 hover:bg-teal-100/90 text-teal-950 border border-teal-200 transition-all text-xs font-bold flex items-center gap-2 group"
-            >
-              <Settings className="w-4 h-4 text-[#2BB8A1] group-hover:rotate-90 transition-transform duration-300" />
-              <span>{t.header.adminCms}</span>
-              <span className="w-2 h-2 rounded-full bg-[#2BB8A1] animate-ping" />
-            </button>
-
             {/* Email Consultation Button */}
             <button
               id="header-quote-btn"
@@ -176,14 +165,6 @@ export const Header: React.FC = () => {
               ))}
             </div>
 
-            <button
-              id="mobile-admin-btn"
-              onClick={() => setIsAdminOpen(true)}
-              className="p-2 rounded-xl bg-emerald-50 text-emerald-700 border border-emerald-200"
-              title="CMS"
-            >
-              <Settings className="w-5 h-5" />
-            </button>
             <button
               id="mobile-menu-toggle"
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}

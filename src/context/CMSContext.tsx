@@ -15,6 +15,7 @@ import {
   ProductCategory,
   OrgCeoInfo,
   OrgQualityInfo,
+  FactoryPhotoItem,
 } from '../types';
 import {
   initialCompanyInfo,
@@ -30,6 +31,7 @@ import {
   initialProductCategories,
   initialOrgCeo,
   initialOrgQuality,
+  initialFactoryPhotos,
 } from '../data/initialData';
 
 
@@ -90,6 +92,23 @@ interface CMSContextType {
   updateHeroSlide: (id: string, slide: Partial<HeroSlide>) => void;
   deleteHeroSlide: (id: string) => void;
 
+  // Factory Facility Photos
+  factoryPhotos: FactoryPhotoItem[];
+  addFactoryPhoto: (photo: Omit<FactoryPhotoItem, 'id'>) => void;
+  updateFactoryPhoto: (id: string, photo: Partial<FactoryPhotoItem>) => void;
+  deleteFactoryPhoto: (id: string) => void;
+  reorderFactoryPhotos: (photos: FactoryPhotoItem[]) => void;
+  moveFactoryPhotoInFilter: (
+    id: string,
+    direction: 'up' | 'down',
+    filterPlant?: 'all' | 'factory1' | 'factory2'
+  ) => void;
+  moveFactoryPhotoToPosition: (
+    id: string,
+    targetFilteredIndex: number,
+    filterPlant?: 'all' | 'factory1' | 'factory2'
+  ) => void;
+
   // Language management in CMS
 
   cmsLang: Language;
@@ -114,6 +133,149 @@ interface CMSContextType {
 const CMSContext = createContext<CMSContextType | undefined>(undefined);
 
 const PERMANENT_STORAGE_KEY = 'baeksong_eng_cms_master';
+
+// Maps of initial bundled assets to self-heal stale cached bundle hashes
+const initialProductImageMap = new Map(initialProducts.map((p) => [p.id, p.imageUrl]));
+const initialEquipmentImageMap = new Map(initialEquipments.map((e) => [e.id, e.imageUrl]));
+const initialHeroSlideImageMap = new Map(initialHeroSlides.map((s) => [s.id, s.imageUrl]));
+const initialFactoryPhotoImageMap = new Map(initialFactoryPhotos.map((p) => [p.id, p.image]));
+
+const initialProductMap = new Map(initialProducts.map((p) => [p.id, p]));
+const initialDepartmentMap = new Map(initialDepartments.map((d) => [d.id, d]));
+
+function sanitizeDepartments(depts: Department[]): Department[] {
+  if (!Array.isArray(depts)) return initialDepartments;
+  return depts.map((d) => {
+    const defaultDept = initialDepartmentMap.get(d.id);
+    let updated = { ...d };
+    if (defaultDept) {
+      if (!updated.cnName && defaultDept.cnName) updated.cnName = defaultDept.cnName;
+      if (!updated.engName && defaultDept.engName) updated.engName = defaultDept.engName;
+      if ((!updated.dutiesCn || updated.dutiesCn.length === 0) && defaultDept.dutiesCn) {
+        updated.dutiesCn = defaultDept.dutiesCn;
+      }
+      if ((!updated.dutiesEn || updated.dutiesEn.length === 0) && defaultDept.dutiesEn) {
+        updated.dutiesEn = defaultDept.dutiesEn;
+      }
+    }
+    return updated;
+  });
+}
+
+function sanitizeProducts(prods: Product[]): Product[] {
+  if (!Array.isArray(prods)) return initialProducts;
+
+  // Filter out any stale/deleted products that might exist in old browser local storage / IndexedDB caches
+  const activeProds = prods.filter((p) => {
+    if (!p) return false;
+    if (p.id === 'prod-1' || p.id === 'prod-33806' || p.id === 'prod-1787019500973') return false;
+    if (p.pn && (p.pn.includes('0020-33806') || p.pn.includes('0010-09231'))) return false;
+    if (p.title && (p.title.includes('33806') || p.title.toLowerCase().includes('pendlum') || p.title.toLowerCase().includes('pendulum'))) return false;
+    return true;
+  });
+
+  return activeProds.map((p) => {
+    const defaultProd = initialProductMap.get(p.id);
+    const defaultImg = initialProductImageMap.get(p.id);
+    let updated = { ...p };
+    
+    // Ensure pn is populated from pl if missing, and vice versa
+    if (!updated.pn && updated.pl) {
+      updated.pn = updated.pl;
+      updated.pnEn = updated.plEn;
+      updated.pnCn = updated.plCn;
+    }
+    if (!updated.pl && updated.pn) {
+      updated.pl = updated.pn;
+      updated.plEn = updated.pnEn;
+      updated.plCn = updated.pnCn;
+    }
+
+    if (defaultProd) {
+      if (!updated.pn && defaultProd.pn) {
+        updated.pn = defaultProd.pn;
+        updated.pnEn = defaultProd.pnEn;
+        updated.pnCn = defaultProd.pnCn;
+      }
+      if (!updated.pl && defaultProd.pl) {
+        updated.pl = defaultProd.pl;
+        updated.plEn = defaultProd.plEn;
+        updated.plCn = defaultProd.plCn;
+      }
+      if (!updated.maker && defaultProd.maker) {
+        updated.maker = defaultProd.maker;
+        updated.makerEn = defaultProd.makerEn;
+        updated.makerCn = defaultProd.makerCn;
+      }
+    }
+    if (defaultImg) {
+      const isCustomUpload = p.imageUrl?.startsWith('data:image/');
+      if (!isCustomUpload) {
+        updated.imageUrl = defaultImg;
+      }
+    }
+    return updated;
+  });
+}
+
+function sanitizeEquipments(eqs: Equipment[]): Equipment[] {
+  if (!Array.isArray(eqs)) return initialEquipments;
+  return eqs.map((e) => {
+    const defaultImg = initialEquipmentImageMap.get(e.id);
+    if (defaultImg) {
+      const isCustomUpload = e.imageUrl?.startsWith('data:image/');
+      if (!isCustomUpload) {
+        return { ...e, imageUrl: defaultImg };
+      }
+    }
+    return e;
+  });
+}
+
+function sanitizeHeroSlides(slides: HeroSlide[]): HeroSlide[] {
+  if (!Array.isArray(slides)) return initialHeroSlides;
+  return slides.map((s) => {
+    const defaultImg = initialHeroSlideImageMap.get(s.id);
+    if (defaultImg) {
+      const isCustomUpload = s.imageUrl?.startsWith('data:image/');
+      if (!isCustomUpload) {
+        return { ...s, imageUrl: defaultImg };
+      }
+    }
+    return s;
+  });
+}
+
+function sanitizeFactoryPhotos(photos: FactoryPhotoItem[]): FactoryPhotoItem[] {
+  if (!Array.isArray(photos) || photos.length === 0) return initialFactoryPhotos;
+  return photos.map((p, idx) => {
+    const defaultImg = initialFactoryPhotoImageMap.get(p.id);
+    const initialItem = initialFactoryPhotos.find((item) => item.id === p.id);
+    let updated: FactoryPhotoItem = { ...p };
+    
+    if (!updated.factoryType) {
+      updated.factoryType = initialItem?.factoryType || (idx < 4 ? 'factory1' : 'factory2');
+    }
+
+    if (defaultImg) {
+      const isCustomUpload = p.image?.startsWith('data:image/');
+      if (!isCustomUpload) {
+        updated.image = defaultImg;
+      }
+    }
+    return updated;
+  });
+}
+
+function sanitizeCompanyInfo(info: CompanyInfo): CompanyInfo {
+  if (!info) return initialCompanyInfo;
+  const isCustomFactoryImg = info.factoryImage?.startsWith('data:image/');
+  return {
+    ...info,
+    factoryImage: isCustomFactoryImg ? info.factoryImage : (initialCompanyInfo.factoryImage || info.factoryImage),
+    formspreeUrl: info.formspreeUrl || 'https://formspree.io/f/xgawngpn',
+  };
+}
 
 function getStoredItem<T>(suffix: string, fallback: T): T {
   if (typeof window === 'undefined') return fallback;
@@ -142,7 +304,7 @@ export const CMSProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [cmsLang, setCmsLang] = useState<Language>('KO');
 
   const [companyInfo, setCompanyInfo] = useState<CompanyInfo>(() =>
-    getStoredItem('company', initialCompanyInfo)
+    sanitizeCompanyInfo(getStoredItem('company', initialCompanyInfo))
   );
 
   const [themeConfig, setThemeConfig] = useState<ThemeConfig>(() =>
@@ -154,11 +316,11 @@ export const CMSProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   );
 
   const [products, setProducts] = useState<Product[]>(() =>
-    getStoredItem('products', initialProducts)
+    sanitizeProducts(getStoredItem('products', initialProducts))
   );
 
   const [equipments, setEquipments] = useState<Equipment[]>(() =>
-    getStoredItem('equipments', initialEquipments)
+    sanitizeEquipments(getStoredItem('equipments', initialEquipments))
   );
 
   const [newsPosts, setNewsPosts] = useState<NewsPost[]>(() =>
@@ -186,21 +348,91 @@ export const CMSProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   );
 
   const [departments, setDepartments] = useState<Department[]>(() =>
-    getStoredItem('departments', initialDepartments)
+    sanitizeDepartments(getStoredItem('departments', initialDepartments))
   );
 
   const [heroSlides, setHeroSlides] = useState<HeroSlide[]>(() =>
-    getStoredItem('hero_slides', initialHeroSlides)
+    sanitizeHeroSlides(getStoredItem('hero_slides', initialHeroSlides))
+  );
+
+  const [factoryPhotos, setFactoryPhotos] = useState<FactoryPhotoItem[]>(() =>
+    sanitizeFactoryPhotos(getStoredItem('factory_photos', initialFactoryPhotos))
   );
 
   const [customTranslations, setCustomTranslations] = useState<CustomTranslations>(() =>
     getStoredItem('custom_translations', { KO: {}, EN: {}, CN: {} })
   );
 
-  const [isAdminOpen, setIsAdminOpen] = useState<boolean>(false);
+  const checkIsAdminRoute = () => {
+    if (typeof window === 'undefined') return false;
+    const path = window.location.pathname.toLowerCase();
+    const hash = window.location.hash.toLowerCase();
+    const search = window.location.search.toLowerCase();
+    return (
+      path === '/admin' ||
+      path.startsWith('/admin/') ||
+      hash === '#/admin' ||
+      hash === '#admin' ||
+      search.includes('admin=true') ||
+      search.includes('page=admin')
+    );
+  };
+
+  const [isAdminOpen, setIsAdminOpenState] = useState<boolean>(() => checkIsAdminRoute());
+
+  const setIsAdminOpen = (open: boolean) => {
+    setIsAdminOpenState(open);
+    if (typeof window !== 'undefined') {
+      try {
+        if (open) {
+          if (!checkIsAdminRoute()) {
+            window.history.pushState({ page: 'admin' }, '', '/admin');
+          }
+        } else {
+          if (checkIsAdminRoute()) {
+            window.history.pushState({ page: 'home' }, '', '/');
+          }
+        }
+      } catch (e) {
+        console.warn('History pushState error:', e);
+      }
+    }
+  };
+
+  // Sync route on popstate / hashchange (e.g. user manually navigates to /admin or presses back button)
+  useEffect(() => {
+    const handleLocationChange = () => {
+      const isAdmin = checkIsAdminRoute();
+      setIsAdminOpenState(isAdmin);
+    };
+
+    window.addEventListener('popstate', handleLocationChange);
+    window.addEventListener('hashchange', handleLocationChange);
+
+    // Initial check
+    handleLocationChange();
+
+    return () => {
+      window.removeEventListener('popstate', handleLocationChange);
+      window.removeEventListener('hashchange', handleLocationChange);
+    };
+  }, []);
+
   const [isQuoteModalOpen, setIsQuoteModalOpen] = useState<boolean>(false);
   const [isSeoModalOpen, setIsSeoModalOpen] = useState<boolean>(false);
-  const [activeNav, setActiveNav] = useState<string>('home');
+  const [activeNav, setActiveNav] = useState<string>(() => {
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search);
+      if (params.has('pn') || params.has('prod') || params.has('search') || params.has('product') || params.has('q')) {
+        return 'products';
+      }
+      const hash = window.location.hash.toLowerCase();
+      if (hash.includes('products') || hash.includes('product')) {
+        return 'products';
+      }
+    }
+    return 'home';
+  });
 
   // Hydrate on startup: first from server persistent JSON file, then from IndexedDB if needed
   useEffect(() => {
@@ -212,19 +444,20 @@ export const CMSProvider: React.FC<{ children: React.ReactNode }> = ({ children 
           const json = await res.json();
           if (json.success && json.data) {
             const d = json.data;
-            if (d.companyInfo) setCompanyInfo(d.companyInfo);
+            if (d.companyInfo) setCompanyInfo(sanitizeCompanyInfo(d.companyInfo));
             if (d.themeConfig) setThemeConfig(d.themeConfig);
             if (d.productCategories) setProductCategories(d.productCategories);
-            if (d.products) setProducts(d.products);
-            if (d.equipments) setEquipments(d.equipments);
+            if (d.products) setProducts(sanitizeProducts(d.products));
+            if (d.equipments) setEquipments(sanitizeEquipments(d.equipments));
             if (d.newsPosts) setNewsPosts(d.newsPosts);
             if (d.inquiries) setInquiries(d.inquiries);
             if (d.certifications) setCertifications(d.certifications);
             if (d.historyItems) setHistoryItems(d.historyItems);
             if (d.orgCeo) setOrgCeo(d.orgCeo);
             if (d.orgQuality) setOrgQuality(d.orgQuality);
-            if (d.departments) setDepartments(d.departments);
-            if (d.heroSlides) setHeroSlides(d.heroSlides);
+            if (d.departments) setDepartments(sanitizeDepartments(d.departments));
+            if (d.heroSlides) setHeroSlides(sanitizeHeroSlides(d.heroSlides));
+            if (d.factoryPhotos) setFactoryPhotos(sanitizeFactoryPhotos(d.factoryPhotos));
             if (d.customTranslations) setCustomTranslations(d.customTranslations);
             return;
           }
@@ -239,7 +472,7 @@ export const CMSProvider: React.FC<{ children: React.ReactNode }> = ({ children 
           (await getIDBItem<CompanyInfo>(`${PERMANENT_STORAGE_KEY}_company`)) ||
           (await getIDBItem<CompanyInfo>(`baeksong_eng_cms_v30_company`)) ||
           (await getIDBItem<CompanyInfo>(`baeksong_eng_cms_v29_company`));
-        if (idbCompany) setCompanyInfo(idbCompany);
+        if (idbCompany) setCompanyInfo(sanitizeCompanyInfo(idbCompany));
 
         const idbCategories = await getIDBItem<ProductCategory[]>(`${PERMANENT_STORAGE_KEY}_product_categories`);
         if (idbCategories) setProductCategories(idbCategories);
@@ -248,17 +481,21 @@ export const CMSProvider: React.FC<{ children: React.ReactNode }> = ({ children 
           (await getIDBItem<HeroSlide[]>(`${PERMANENT_STORAGE_KEY}_hero_slides`)) ||
           (await getIDBItem<HeroSlide[]>(`baeksong_eng_cms_v30_hero_slides`)) ||
           (await getIDBItem<HeroSlide[]>(`baeksong_eng_cms_v29_hero_slides`));
-        if (idbHeroSlides) setHeroSlides(idbHeroSlides);
+        if (idbHeroSlides) setHeroSlides(sanitizeHeroSlides(idbHeroSlides));
+
+        const idbFactoryPhotos =
+          (await getIDBItem<FactoryPhotoItem[]>(`${PERMANENT_STORAGE_KEY}_factory_photos`));
+        if (idbFactoryPhotos) setFactoryPhotos(sanitizeFactoryPhotos(idbFactoryPhotos));
 
         const idbProducts =
           (await getIDBItem<Product[]>(`${PERMANENT_STORAGE_KEY}_products`)) ||
           (await getIDBItem<Product[]>(`baeksong_eng_cms_v30_products`));
-        if (idbProducts) setProducts(idbProducts);
+        if (idbProducts) setProducts(sanitizeProducts(idbProducts));
 
         const idbEquipments =
           (await getIDBItem<Equipment[]>(`${PERMANENT_STORAGE_KEY}_equipments`)) ||
           (await getIDBItem<Equipment[]>(`baeksong_eng_cms_v30_equipments`));
-        if (idbEquipments) setEquipments(idbEquipments);
+        if (idbEquipments) setEquipments(sanitizeEquipments(idbEquipments));
 
         const idbNews = await getIDBItem<NewsPost[]>(`${PERMANENT_STORAGE_KEY}_news`);
         if (idbNews) setNewsPosts(idbNews);
@@ -279,7 +516,7 @@ export const CMSProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         if (idbQuality) setOrgQuality(idbQuality);
 
         const idbDepts = await getIDBItem<Department[]>(`${PERMANENT_STORAGE_KEY}_departments`);
-        if (idbDepts) setDepartments(idbDepts);
+        if (idbDepts) setDepartments(sanitizeDepartments(idbDepts));
 
         const idbTrans = await getIDBItem<CustomTranslations>(`${PERMANENT_STORAGE_KEY}_custom_translations`);
         if (idbTrans) setCustomTranslations(idbTrans);
@@ -306,6 +543,7 @@ export const CMSProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     saveToStorage(`${PERMANENT_STORAGE_KEY}_org_quality`, orgQuality);
     saveToStorage(`${PERMANENT_STORAGE_KEY}_departments`, departments);
     saveToStorage(`${PERMANENT_STORAGE_KEY}_hero_slides`, heroSlides);
+    saveToStorage(`${PERMANENT_STORAGE_KEY}_factory_photos`, factoryPhotos);
     saveToStorage(`${PERMANENT_STORAGE_KEY}_custom_translations`, customTranslations);
 
     // Debounced sync to persistent server JSON file
@@ -328,6 +566,7 @@ export const CMSProvider: React.FC<{ children: React.ReactNode }> = ({ children 
             orgQuality,
             departments,
             heroSlides,
+            factoryPhotos,
             customTranslations,
           },
         }),
@@ -349,6 +588,7 @@ export const CMSProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     orgQuality,
     departments,
     heroSlides,
+    factoryPhotos,
     customTranslations,
   ]);
 
@@ -517,6 +757,97 @@ export const CMSProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setHeroSlides((prev) => prev.filter((s) => s.id !== id));
   };
 
+  // Factory Photos Handlers
+  const addFactoryPhoto = (photo: Omit<FactoryPhotoItem, 'id'>) => {
+    const newPhoto: FactoryPhotoItem = {
+      ...photo,
+      id: `plant-photo-${Date.now()}`,
+    };
+    setFactoryPhotos((prev) => [newPhoto, ...prev]);
+  };
+
+  const updateFactoryPhoto = (id: string, photo: Partial<FactoryPhotoItem>) => {
+    setFactoryPhotos((prev) => prev.map((p) => (p.id === id ? { ...p, ...photo } : p)));
+  };
+
+  const deleteFactoryPhoto = (id: string) => {
+    setFactoryPhotos((prev) => prev.filter((p) => p.id !== id));
+  };
+
+  const reorderFactoryPhotos = (photos: FactoryPhotoItem[]) => {
+    setFactoryPhotos(photos);
+  };
+
+  const moveFactoryPhotoInFilter = (
+    id: string,
+    direction: 'up' | 'down',
+    filterPlant: 'all' | 'factory1' | 'factory2' = 'all'
+  ) => {
+    setFactoryPhotos((prev) => {
+      if (filterPlant === 'all') {
+        const index = prev.findIndex((p) => p.id === id);
+        if (index === -1) return prev;
+        const targetIndex = direction === 'up' ? index - 1 : index + 1;
+        if (targetIndex < 0 || targetIndex >= prev.length) return prev;
+        const next = [...prev];
+        const [moved] = next.splice(index, 1);
+        next.splice(targetIndex, 0, moved);
+        return next;
+      }
+
+      // Filtered list movement: swap positions relative to the items in the same plant
+      const filtered = prev.filter((p) => (p.factoryType || 'factory1') === filterPlant);
+      const filteredIndex = filtered.findIndex((p) => p.id === id);
+      if (filteredIndex === -1) return prev;
+      const targetFilteredIndex = direction === 'up' ? filteredIndex - 1 : filteredIndex + 1;
+      if (targetFilteredIndex < 0 || targetFilteredIndex >= filtered.length) return prev;
+
+      const targetItem = filtered[targetFilteredIndex];
+      const origIndex = prev.findIndex((p) => p.id === id);
+      const targetOrigIndex = prev.findIndex((p) => p.id === targetItem.id);
+      if (origIndex === -1 || targetOrigIndex === -1) return prev;
+
+      const next = [...prev];
+      const temp = next[origIndex];
+      next[origIndex] = next[targetOrigIndex];
+      next[targetOrigIndex] = temp;
+      return next;
+    });
+  };
+
+  const moveFactoryPhotoToPosition = (
+    id: string,
+    targetFilteredIndex: number,
+    filterPlant: 'all' | 'factory1' | 'factory2' = 'all'
+  ) => {
+    setFactoryPhotos((prev) => {
+      const origIndex = prev.findIndex((p) => p.id === id);
+      if (origIndex === -1) return prev;
+
+      if (filterPlant === 'all') {
+        if (targetFilteredIndex < 0 || targetFilteredIndex >= prev.length) return prev;
+        const next = [...prev];
+        const [moved] = next.splice(origIndex, 1);
+        next.splice(targetFilteredIndex, 0, moved);
+        return next;
+      }
+
+      const filtered = prev.filter((p) => (p.factoryType || 'factory1') === filterPlant);
+      if (targetFilteredIndex < 0 || targetFilteredIndex >= filtered.length) return prev;
+      const targetItem = filtered[targetFilteredIndex];
+      if (!targetItem || targetItem.id === id) return prev;
+
+      const targetOrigIndex = prev.findIndex((p) => p.id === targetItem.id);
+      if (targetOrigIndex === -1) return prev;
+
+      const next = [...prev];
+      const [moved] = next.splice(origIndex, 1);
+      const newTargetOrigIndex = next.findIndex((p) => p.id === targetItem.id);
+      next.splice(newTargetOrigIndex, 0, moved);
+      return next;
+    });
+  };
+
   const updateSectionTranslation = (lang: Language, section: string, key: string, value: string) => {
 
     setCustomTranslations((prev) => ({
@@ -559,6 +890,7 @@ export const CMSProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       setOrgQuality(initialOrgQuality);
       setDepartments(initialDepartments);
       setHeroSlides(initialHeroSlides);
+      setFactoryPhotos(initialFactoryPhotos);
       setCustomTranslations({ KO: {}, EN: {}, CN: {} });
       try {
         localStorage.clear();
@@ -615,6 +947,13 @@ export const CMSProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         addHeroSlide,
         updateHeroSlide,
         deleteHeroSlide,
+        factoryPhotos,
+        addFactoryPhoto,
+        updateFactoryPhoto,
+        deleteFactoryPhoto,
+        reorderFactoryPhotos,
+        moveFactoryPhotoInFilter,
+        moveFactoryPhotoToPosition,
         cmsLang,
         setCmsLang,
         customTranslations,

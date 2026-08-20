@@ -1,1 +1,16 @@
 @import "tailwindcss";
+
+@layer utilities {
+  .font-pn {
+    font-family: 'JetBrains Mono', 'Chivo Mono', monospace, ui-monospace;
+    font-feature-settings: 'tnum' on, 'zero' on, 'ss01' on;
+    letter-spacing: 0.035em;
+  }
+  .font-tech-code {
+    font-family: 'Chivo Mono', 'JetBrains Mono', monospace;
+    font-feature-settings: 'tnum' on;
+  }
+  .font-tech-heading {
+    font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Noto Sans KR", sans-serif;
+  }
+}

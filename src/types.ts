@@ -89,7 +89,16 @@ export interface Product {
   title: string;
   titleEn?: string;
   titleCn?: string;
-  description: string;
+  pn?: string;
+  pnEn?: string;
+  pnCn?: string;
+  pl?: string;
+  plEn?: string;
+  plCn?: string;
+  maker?: string;
+  makerEn?: string;
+  makerCn?: string;
+  description?: string;
   descriptionEn?: string;
   descriptionCn?: string;
   material?: string;
@@ -187,4 +196,20 @@ export interface HeroSlide {
   subtitleCn?: string;
   imageUrl: string;
 }
+
+export interface FactoryPhotoItem {
+  id: string;
+  image: string;
+  factoryType?: 'factory1' | 'factory2';
+  titleKo: string;
+  titleEn?: string;
+  titleCn?: string;
+  descKo?: string;
+  descEn?: string;
+  descCn?: string;
+  tagKo?: string;
+  tagEn?: string;
+  tagCn?: string;
+}
+
 

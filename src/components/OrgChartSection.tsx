@@ -68,9 +68,11 @@ export const OrgChartSection: React.FC = () => {
                 <Building2 className="w-7 h-7" />
               </div>
               <span className="text-[11px] font-bold text-emerald-700 uppercase tracking-widest font-mono block">
-                {ceoTitle}
+                {language === 'EN' ? 'EXECUTIVE MANAGEMENT' : language === 'CN' ? '最高管理层' : '최고 경영진'}
               </span>
-              <h3 className="text-2xl font-black text-slate-900 mt-1">{ceoName}</h3>
+              <h3 className="text-2xl font-black text-slate-900 mt-1">
+                {language === 'EN' ? 'CHIEF EXECUTIVE OFFICER (CEO)' : language === 'CN' ? '代表理事 (CEO)' : '대표이사 (CEO)'}
+              </h3>
               <p className="text-xs text-slate-500 mt-2 leading-relaxed">
                 {ceoDesc}
               </p>
@@ -104,6 +106,13 @@ export const OrgChartSection: React.FC = () => {
             {departments.map((dept) => {
               const Icon = getDeptIcon(dept.iconName);
               const displayName = language === 'EN' ? dept.engName : language === 'CN' && dept.cnName ? dept.cnName : dept.name;
+              const currentDuties =
+                language === 'EN' && dept.dutiesEn && dept.dutiesEn.length > 0
+                  ? dept.dutiesEn
+                  : language === 'CN' && dept.dutiesCn && dept.dutiesCn.length > 0
+                  ? dept.dutiesCn
+                  : dept.duties;
+
               return (
                 <div
                   key={dept.id}
@@ -121,7 +130,7 @@ export const OrgChartSection: React.FC = () => {
                     </div>
 
                     <div className="space-y-2.5 pt-3 border-t border-slate-100">
-                      {dept.duties.map((duty, idx) => (
+                      {currentDuties.map((duty, idx) => (
                         <div key={idx} className="flex items-start gap-2 text-xs text-slate-600">
                           <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0 mt-0.5" />
                           <span className="leading-tight">{duty}</span>

@@ -2,12 +2,13 @@ import React from 'react';
 import { useCMS } from '../context/CMSContext';
 import { useLanguage } from '../context/LanguageContext';
 import { CompanyLogoSymbol } from './CompanyLogo';
+import { FactoryGallerySlider } from './FactoryGallerySlider';
 import {
   Building2,
   Calendar,
   TrendingUp,
 } from 'lucide-react';
-import factoryImg from '../assets/images/baeksong_factory_building_1786341448165.jpg';
+import factoryImg from '../assets/images/baeksong_real_exterior_1786692106395.jpg';
 
 export const AboutSection: React.FC = () => {
   const { companyInfo, historyItems } = useCMS();
@@ -28,9 +29,11 @@ export const AboutSection: React.FC = () => {
           <h2 className="text-3xl sm:text-4xl font-extrabold text-slate-900 tracking-tight font-sans">
             {t.about.title}
           </h2>
-          <p className="mt-4 text-sm sm:text-base text-slate-600 leading-relaxed">
-            {t.about.subtitle}
-          </p>
+          {t.about.subtitle && (
+            <p className="mt-4 text-sm sm:text-base text-slate-600 leading-relaxed">
+              {t.about.subtitle}
+            </p>
+          )}
         </div>
 
         {/* Top Grid: CEO Greeting + Factory Image */}
@@ -59,10 +62,10 @@ export const AboutSection: React.FC = () => {
                   <h3 className="text-2xl font-black text-slate-900">{t.about.ceoTitle}</h3>
                   <p className="text-xs text-[#2BB8A1] font-bold font-mono mt-0.5">
                     {language === 'EN'
-                      ? `${companyInfo.engName || 'BAEKSONG ENG'} Representative CEO ${companyInfo.ceo}`
+                      ? `${companyInfo.engName || 'BAEKSONG ENG'} Representative CEO`
                       : language === 'CN'
-                      ? `${companyInfo.name} 社长/代表 ${companyInfo.ceo}`
-                      : `${companyInfo.name} 대표이사 ${companyInfo.ceo}`}
+                      ? `${companyInfo.engName || 'BAEKSONG ENG'} 代表理事 (CEO)`
+                      : `${companyInfo.name || '(주)백송이엔지'} 대표이사`}
                   </p>
                 </div>
               </div>
@@ -88,10 +91,13 @@ export const AboutSection: React.FC = () => {
             />
             <div className="absolute inset-0 bg-gradient-to-t from-slate-950/40 via-transparent to-slate-950/10 pointer-events-none group-hover:opacity-60 transition-opacity duration-500" />
             <div className="absolute bottom-4 left-4 z-10 px-3.5 py-1.5 rounded-xl bg-slate-900/85 backdrop-blur-md border border-slate-700 text-white text-xs font-bold font-mono shadow-lg">
-              {language === 'EN' ? 'BAEKSONG ENG Headquarters / Plant' : language === 'CN' ? '白松ENG 总部/工厂全景' : '(주)백송이엔지 본사 / 공장 전경'}
+              {language === 'EN' ? 'BAEKSONG ENG Headquarters / Plant' : language === 'CN' ? 'BAEKSONG ENG 总部/工厂全景' : '(주)백송이엔지 본사 / 공장 전경'}
             </div>
           </div>
         </div>
+
+        {/* Middle: Real Factory Facility & Machining Centers Slider */}
+        <FactoryGallerySlider />
 
         {/* Bottom: History Timeline */}
         <div>
@@ -100,13 +106,6 @@ export const AboutSection: React.FC = () => {
               <TrendingUp className="w-6 h-6 text-[#2BB8A1]" />
               <span>{t.about.historyTitle}</span>
             </h3>
-            <p className="text-xs text-slate-500 mt-2">
-              {language === 'EN'
-                ? 'Milestones and records of technological innovation sustained since establishment'
-                : language === 'CN'
-                ? '自成立以来持续技术创新的纪录'
-                : '1998년 설립부터 지속해온 기술 혁신의 기록입니다'}
-            </p>
           </div>
 
           <div className="relative border-l-2 border-teal-200 ml-4 md:ml-32 space-y-8">

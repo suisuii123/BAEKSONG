@@ -1,10 +1,12 @@
 import React, { useState } from 'react';
 import { useCMS } from '../../context/CMSContext';
 import { useLanguage } from '../../context/LanguageContext';
-import { Product, Equipment, NewsPost, HistoryItem, Department, Language, HeroSlide, ProductCategory, OrgCeoInfo, OrgQualityInfo } from '../../types';
+import { Product, Equipment, NewsPost, HistoryItem, Department, Language, HeroSlide, ProductCategory, OrgCeoInfo, OrgQualityInfo, FactoryPhotoItem } from '../../types';
 import { autoTranslateText } from '../../utils/translator';
 import { submitToFormspree, DEFAULT_FORMSPREE_ENDPOINT } from '../../utils/formspree';
-import factoryImg from '../../assets/images/baeksong_factory_building_1786341448165.jpg';
+import { drawWatermarkOnCanvas, applyWatermarkToImage } from '../../utils/watermark';
+import { ProductWatermarkOverlay } from '../ProductWatermarkOverlay';
+import factoryImg from '../../assets/images/baeksong_real_exterior_1786692106395.jpg';
 import {
   X,
   Settings,
@@ -33,6 +35,12 @@ import {
   Loader2,
   Image as ImageIcon,
   Tag,
+  Factory,
+  ChevronUp,
+  ChevronDown,
+  ChevronsUp,
+  ChevronsDown,
+  ArrowUpDown,
 } from 'lucide-react';
 
 export const AdminDashboardModal: React.FC = () => {
@@ -78,6 +86,12 @@ export const AdminDashboardModal: React.FC = () => {
     addHeroSlide,
     updateHeroSlide,
     deleteHeroSlide,
+    factoryPhotos,
+    addFactoryPhoto,
+    updateFactoryPhoto,
+    deleteFactoryPhoto,
+    moveFactoryPhotoInFilter,
+    moveFactoryPhotoToPosition,
     cmsLang,
     setCmsLang,
     customTranslations,
@@ -88,12 +102,16 @@ export const AdminDashboardModal: React.FC = () => {
   const { t } = useLanguage();
 
   const [activeTab, setActiveTab] = useState<
-    'hero' | 'company' | 'orgchart' | 'equipment' | 'products' | 'contact' | 'news' | 'theme' | 'inquiries'
+    'hero' | 'factory' | 'company' | 'orgchart' | 'equipment' | 'products' | 'contact' | 'news' | 'theme' | 'inquiries'
   >('hero');
 
 
-  // File Upload Helper with automatic HTML5 Canvas image compression to keep base64 within localStorage limits
-  const handleFileUpload = (file: File, callback: (dataUrl: string) => void) => {
+  // File Upload Helper with optional automatic Watermark application and HTML5 Canvas compression
+  const handleFileUpload = (
+    file: File,
+    callback: (dataUrl: string) => void,
+    options?: { watermark?: boolean }
+  ) => {
     if (!file) return;
     const reader = new FileReader();
     reader.onload = (e) => {
@@ -126,7 +144,13 @@ export const AdminDashboardModal: React.FC = () => {
             const ctx = canvas.getContext('2d');
             if (ctx) {
               ctx.drawImage(img, 0, 0, width, height);
-              const compressedDataUrl = canvas.toDataURL('image/jpeg', 0.75);
+
+              // Apply BAEKSONG ENG official watermark if requested
+              if (options?.watermark) {
+                drawWatermarkOnCanvas(ctx, width, height, { opacity: 0.38, scale: 0.46 });
+              }
+
+              const compressedDataUrl = canvas.toDataURL('image/jpeg', 0.82);
               callback(compressedDataUrl);
             } else {
               callback(rawDataUrl);
@@ -170,11 +194,16 @@ export const AdminDashboardModal: React.FC = () => {
 
   // State for adding Product
   const [newProdTitle, setNewProdTitle] = useState('');
+  const [newProdTitleEn, setNewProdTitleEn] = useState('');
+  const [newProdTitleCn, setNewProdTitleCn] = useState('');
+  const [newProdPN, setNewProdPN] = useState('');
+  const [newProdPNEn, setNewProdPNEn] = useState('');
+  const [newProdPNCn, setNewProdPNCn] = useState('');
+  const [newProdMaker, setNewProdMaker] = useState('');
+  const [newProdMakerEn, setNewProdMakerEn] = useState('');
+  const [newProdMakerCn, setNewProdMakerCn] = useState('');
   const [newProdCat, setNewProdCat] = useState<string>('chamber');
-  const [newProdDesc, setNewProdDesc] = useState('');
   const [newProdImageUrl, setNewProdImageUrl] = useState('');
-  const [editingProdId, setEditingProdId] = useState<string | null>(null);
-  const [editingProdData, setEditingProdData] = useState<Partial<Product>>({});
 
   // State for adding Equipment
   const [newEqName, setNewEqName] = useState('');
@@ -215,9 +244,37 @@ export const AdminDashboardModal: React.FC = () => {
   // State for inline edit of a specific hero slide
   const [inlineSlideForm, setInlineSlideForm] = useState<HeroSlide | null>(null);
 
+  // State for Factory Photos Management
+  const [editingFactoryPhotoId, setEditingFactoryPhotoId] = useState<string | null>(null);
+  const [adminFactoryPlantTab, setAdminFactoryPlantTab] = useState<'all' | 'factory1' | 'factory2'>('factory1');
+  const [factoryPhotoForm, setFactoryPhotoForm] = useState<Omit<FactoryPhotoItem, 'id'>>({
+    image: '',
+    factoryType: 'factory1',
+    titleKo: '',
+    titleEn: '',
+    titleCn: '',
+    descKo: '',
+    descEn: '',
+    descCn: '',
+    tagKo: '제1공장',
+    tagEn: 'Plant 1',
+    tagCn: '第1工厂',
+  });
+  const [inlineFactoryPhotoForm, setInlineFactoryPhotoForm] = useState<FactoryPhotoItem | null>(null);
+  const [deleteConfirmPhotoId, setDeleteConfirmPhotoId] = useState<string | null>(null);
+
   // State for inline edit of a product
   const [editingProductId, setEditingProductId] = useState<string | null>(null);
   const [editingProductForm, setEditingProductForm] = useState<Product | null>(null);
+  const [deleteConfirmProdId, setDeleteConfirmProdId] = useState<string | null>(null);
+  const [toastMessage, setToastMessage] = useState<string | null>(null);
+
+  const showToast = (msg: string) => {
+    setToastMessage(msg);
+    setTimeout(() => {
+      setToastMessage((current) => (current === msg ? null : current));
+    }, 3000);
+  };
 
   // AI Translation State
   const [isTranslating, setIsTranslating] = useState<boolean>(false);
@@ -367,6 +424,24 @@ export const AdminDashboardModal: React.FC = () => {
         });
       }
 
+      // 7. Factory Photos
+      for (const photo of factoryPhotos) {
+        if (photo.titleKo) {
+          const transTitle = await autoTranslateText(photo.titleKo, 'Factory facility photo title');
+          const transDesc = photo.descKo ? await autoTranslateText(photo.descKo, 'Factory facility photo description') : { english: '', chinese: '' };
+          const transTag = photo.tagKo ? await autoTranslateText(photo.tagKo, 'Factory photo category tag') : { english: photo.tagKo, chinese: photo.tagKo };
+
+          updateFactoryPhoto(photo.id, {
+            titleEn: transTitle.english,
+            titleCn: transTitle.chinese,
+            descEn: transDesc.english,
+            descCn: transDesc.chinese,
+            tagEn: transTag.english,
+            tagCn: transTag.chinese,
+          });
+        }
+      }
+
       setTranslationNotice('🎉 모든 CMS 데이터의 영문 및 중문 AI 자동번역/동기화가 완료되었습니다!');
     } catch (err) {
       console.error('Batch translate error:', err);
@@ -474,6 +549,105 @@ export const AdminDashboardModal: React.FC = () => {
     });
   };
 
+  const handleStartInlineEditFactoryPhoto = (photo: FactoryPhotoItem) => {
+    setEditingFactoryPhotoId(photo.id);
+    setInlineFactoryPhotoForm({
+      ...photo,
+      factoryType: photo.factoryType || 'factory1',
+    });
+  };
+
+  const handleCancelInlineEditFactoryPhoto = () => {
+    setEditingFactoryPhotoId(null);
+    setInlineFactoryPhotoForm(null);
+  };
+
+  const handleSaveInlineEditFactoryPhoto = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!inlineFactoryPhotoForm) return;
+
+    let updated = { ...inlineFactoryPhotoForm };
+    if (!updated.factoryType) {
+      updated.factoryType = 'factory1';
+    }
+    if (!updated.titleEn || !updated.titleCn) {
+      setIsTranslating(true);
+      try {
+        const titleTrans = await autoTranslateText(updated.titleKo, 'Factory facility photo title');
+        const descTrans = updated.descKo ? await autoTranslateText(updated.descKo, 'Factory facility photo description') : { english: '', chinese: '' };
+        const tagTrans = updated.tagKo ? await autoTranslateText(updated.tagKo, 'Factory tag') : { english: updated.tagKo, chinese: updated.tagKo };
+
+        updated.titleEn = updated.titleEn || titleTrans.english;
+        updated.titleCn = updated.titleCn || titleTrans.chinese;
+        updated.descEn = updated.descEn || descTrans.english;
+        updated.descCn = updated.descCn || descTrans.chinese;
+        updated.tagEn = updated.tagEn || tagTrans.english;
+        updated.tagCn = updated.tagCn || tagTrans.chinese;
+      } catch (err) {
+        console.error(err);
+      } finally {
+        setIsTranslating(false);
+      }
+    }
+
+    updateFactoryPhoto(updated.id, updated);
+    showToast('공장 현장 사진 정보가 성공적으로 수정되었습니다.');
+    handleCancelInlineEditFactoryPhoto();
+  };
+
+  const handleAddFactoryPhoto = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!factoryPhotoForm.image.trim()) {
+      alert('공장 현장 사진을 업로드하거나 이미지 URL을 입력해주세요.');
+      return;
+    }
+    if (!factoryPhotoForm.titleKo.trim()) {
+      alert('사진 제목(설명)을 입력해주세요.');
+      return;
+    }
+
+    let finalForm = {
+      ...factoryPhotoForm,
+      factoryType: factoryPhotoForm.factoryType || (adminFactoryPlantTab === 'factory2' ? 'factory2' : 'factory1'),
+    };
+    if (!finalForm.titleEn || !finalForm.titleCn) {
+      setIsTranslating(true);
+      try {
+        const titleTrans = await autoTranslateText(finalForm.titleKo, 'Factory facility photo title');
+        const descTrans = finalForm.descKo ? await autoTranslateText(finalForm.descKo, 'Factory facility photo description') : { english: '', chinese: '' };
+        const tagTrans = finalForm.tagKo ? await autoTranslateText(finalForm.tagKo, 'Factory tag') : { english: finalForm.tagKo, chinese: finalForm.tagKo };
+
+        finalForm.titleEn = finalForm.titleEn || titleTrans.english;
+        finalForm.titleCn = finalForm.titleCn || titleTrans.chinese;
+        finalForm.descEn = finalForm.descEn || descTrans.english;
+        finalForm.descCn = finalForm.descCn || descTrans.chinese;
+        finalForm.tagEn = finalForm.tagEn || tagTrans.english;
+        finalForm.tagCn = finalForm.tagCn || tagTrans.chinese;
+      } catch (err) {
+        console.error(err);
+      } finally {
+        setIsTranslating(false);
+      }
+    }
+
+    addFactoryPhoto(finalForm);
+    const plantName = finalForm.factoryType === 'factory2' ? '제2공장' : '제1공장';
+    showToast(`새 ${plantName} 현장 사진이 성공적으로 등록되었습니다.`);
+    setFactoryPhotoForm({
+      image: '',
+      factoryType: adminFactoryPlantTab === 'factory2' ? 'factory2' : 'factory1',
+      titleKo: '',
+      titleEn: '',
+      titleCn: '',
+      descKo: '',
+      descEn: '',
+      descCn: '',
+      tagKo: adminFactoryPlantTab === 'factory2' ? '제2공장' : '제1공장',
+      tagEn: adminFactoryPlantTab === 'factory2' ? 'Plant 2' : 'Plant 1',
+      tagCn: adminFactoryPlantTab === 'factory2' ? '第2工厂' : '第1工厂',
+    });
+  };
+
   if (!isAdminOpen) return null;
 
   const presetColors = [
@@ -553,11 +727,13 @@ export const AdminDashboardModal: React.FC = () => {
             </button>
 
             <button
-              id="close-admin-modal"
+              id="close-admin-modal-btn"
               onClick={() => setIsAdminOpen(false)}
-              className="p-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-600 hover:text-slate-900"
+              className="px-3.5 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-900 text-white text-xs font-bold flex items-center gap-1.5 shadow-sm transition-colors cursor-pointer"
+              title="관리자 화면을 닫고 메인 홈페이지(/)로 이동합니다"
             >
-              <X className="w-5 h-5" />
+              <span>메인 홈페이지로 이동</span>
+              <X className="w-4 h-4" />
             </button>
           </div>
         </div>
@@ -617,6 +793,18 @@ export const AdminDashboardModal: React.FC = () => {
           >
             <ImageIcon className="w-4 h-4" />
             <span>메인 슬라이더 ({heroSlides.length})</span>
+          </button>
+
+          <button
+            onClick={() => setActiveTab('factory')}
+            className={`px-3.5 py-2 rounded-xl flex items-center gap-2 transition-all whitespace-nowrap ${
+              activeTab === 'factory'
+                ? 'bg-purple-600 text-white shadow-md'
+                : 'text-slate-600 hover:bg-slate-200/60'
+            }`}
+          >
+            <Factory className="w-4 h-4" />
+            <span>공장 현장 사진 ({factoryPhotos.length})</span>
           </button>
 
           <button
@@ -720,7 +908,22 @@ export const AdminDashboardModal: React.FC = () => {
         </div>
 
         {/* Tab Body Content */}
-        <div className="flex-1 overflow-y-auto p-6 text-xs text-slate-700">
+        <div className="flex-1 overflow-y-auto p-6 text-xs text-slate-700 relative">
+          {toastMessage && (
+            <div className="sticky top-0 z-30 mb-4 px-4 py-3 rounded-xl bg-slate-900 text-white font-bold text-xs flex items-center justify-between shadow-xl animate-fade-in border border-slate-700">
+              <span className="flex items-center gap-2">
+                <Check className="w-4 h-4 text-emerald-400" />
+                <span>{toastMessage}</span>
+              </span>
+              <button
+                type="button"
+                onClick={() => setToastMessage(null)}
+                className="text-slate-400 hover:text-white p-1"
+              >
+                ✕
+              </button>
+            </div>
+          )}
           
           {/* TAB 0: Hero Slider Management */}
           {activeTab === 'hero' && (
@@ -1174,14 +1377,13 @@ export const AdminDashboardModal: React.FC = () => {
                               <button
                                 onClick={() => {
                                   if (heroSlides.length <= 1) {
-                                    alert('최소 1개 이상의 슬라이드가 유지되어야 합니다.');
+                                    showToast('⚠️ 최소 1개 이상의 슬라이드가 유지되어야 합니다.');
                                     return;
                                   }
-                                  if (window.confirm('이 배경 슬라이드를 삭제하시겠습니까?')) {
-                                    deleteHeroSlide(slide.id);
-                                  }
+                                  deleteHeroSlide(slide.id);
+                                  showToast('배경 슬라이드가 삭제되었습니다.');
                                 }}
-                                className="px-3.5 py-2 rounded-xl bg-red-50 hover:bg-red-100 border border-red-200 text-red-600 font-bold flex items-center gap-1.5 transition-colors"
+                                className="px-3.5 py-2 rounded-xl bg-red-50 hover:bg-red-100 border border-red-200 text-red-600 font-bold flex items-center gap-1.5 transition-colors cursor-pointer"
                               >
                                 <Trash2 className="w-3.5 h-3.5" />
                                 <span>삭제</span>
@@ -1195,6 +1397,675 @@ export const AdminDashboardModal: React.FC = () => {
                 </div>
               </div>
             </div>
+          )}
+
+          {/* TAB 0.5: Factory Photos Management */}
+          {activeTab === 'factory' && (
+            <div className="space-y-8 max-w-4xl">
+              {/* Header Info */}
+              <div className="p-4 rounded-2xl bg-cyan-50 border border-cyan-200 flex items-center justify-between gap-4">
+                <div className="flex items-center gap-3">
+                  <span className="p-2.5 rounded-xl bg-cyan-600 text-white font-bold">
+                    <Factory className="w-5 h-5" />
+                  </span>
+                  <div>
+                    <h4 className="font-bold text-slate-900 text-sm flex items-center gap-2">
+                      <span>(주)백송이엔지 1공장 / 2공장 가공 현장 사진 관리</span>
+                      <span className="px-2 py-0.5 rounded-full bg-cyan-100 text-cyan-800 text-[10px] font-bold">
+                        총 {factoryPhotos.length}장 (1공장: {factoryPhotos.filter(p => (p.factoryType || 'factory1') === 'factory1').length}장 / 2공장: {factoryPhotos.filter(p => p.factoryType === 'factory2').length}장)
+                      </span>
+                    </h4>
+                    <p className="text-[11px] text-slate-600 mt-0.5">
+                      회사소개 페이지의 실제 공장 갤러리 슬라이드에 표시되는 1공장 및 2공장 사진을 구분하여 등록, 수정, 삭제합니다. 등록된 사진은 퍼블리시 및 배포 시에도 안전하게 보존됩니다.
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* 1공장 / 2공장 전환 서브 탭 */}
+              <div className="flex flex-wrap items-center gap-2 bg-slate-100 p-1.5 rounded-2xl border border-slate-200">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setAdminFactoryPlantTab('factory1');
+                    setFactoryPhotoForm((prev) => ({
+                      ...prev,
+                      factoryType: 'factory1',
+                      tagKo: prev.tagKo === '제2공장' ? '제1공장' : prev.tagKo,
+                      tagEn: prev.tagEn === 'Plant 2' ? 'Plant 1' : prev.tagEn,
+                      tagCn: prev.tagCn === '第2工厂' ? '第1工厂' : prev.tagCn,
+                    }));
+                  }}
+                  className={`flex-1 min-w-[140px] px-4 py-2.5 rounded-xl font-bold text-xs flex items-center justify-center gap-2 transition-all cursor-pointer ${
+                    adminFactoryPlantTab === 'factory1'
+                      ? 'bg-[#2BB8A1] text-white shadow-md'
+                      : 'bg-transparent text-slate-600 hover:text-slate-900 hover:bg-slate-200/60'
+                  }`}
+                >
+                  <Factory className="w-4 h-4" />
+                  <span>제1공장 사진 관리</span>
+                  <span className={`px-2 py-0.5 rounded-full text-[10px] font-mono font-bold ${
+                    adminFactoryPlantTab === 'factory1' ? 'bg-slate-900 text-white' : 'bg-slate-200 text-slate-700'
+                  }`}>
+                    {factoryPhotos.filter(p => (p.factoryType || 'factory1') === 'factory1').length}
+                  </span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    setAdminFactoryPlantTab('factory2');
+                    setFactoryPhotoForm((prev) => ({
+                      ...prev,
+                      factoryType: 'factory2',
+                      tagKo: prev.tagKo === '제1공장' ? '제2공장' : prev.tagKo,
+                      tagEn: prev.tagEn === 'Plant 1' ? 'Plant 2' : prev.tagEn,
+                      tagCn: prev.tagCn === '第1工厂' ? '第2工厂' : prev.tagCn,
+                    }));
+                  }}
+                  className={`flex-1 min-w-[140px] px-4 py-2.5 rounded-xl font-bold text-xs flex items-center justify-center gap-2 transition-all cursor-pointer ${
+                    adminFactoryPlantTab === 'factory2'
+                      ? 'bg-blue-600 text-white shadow-md'
+                      : 'bg-transparent text-slate-600 hover:text-slate-900 hover:bg-slate-200/60'
+                  }`}
+                >
+                  <Factory className="w-4 h-4" />
+                  <span>제2공장 사진 관리</span>
+                  <span className={`px-2 py-0.5 rounded-full text-[10px] font-mono font-bold ${
+                    adminFactoryPlantTab === 'factory2' ? 'bg-slate-900 text-white' : 'bg-slate-200 text-slate-700'
+                  }`}>
+                    {factoryPhotos.filter(p => p.factoryType === 'factory2').length}
+                  </span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setAdminFactoryPlantTab('all')}
+                  className={`px-4 py-2.5 rounded-xl font-bold text-xs flex items-center justify-center gap-2 transition-all cursor-pointer ${
+                    adminFactoryPlantTab === 'all'
+                      ? 'bg-slate-800 text-white shadow-md'
+                      : 'bg-transparent text-slate-600 hover:text-slate-900 hover:bg-slate-200/60'
+                  }`}
+                >
+                  <span>전체 보기 ({factoryPhotos.length})</span>
+                </button>
+              </div>
+
+              {/* Add New Factory Photo Form Card */}
+              <div className="bg-slate-50 p-6 rounded-2xl border border-slate-200 space-y-6">
+                <div className="flex items-center justify-between pb-3 border-b border-slate-200">
+                  <h4 className="text-sm font-bold text-slate-900 flex items-center gap-2">
+                    <Plus className="w-4 h-4 text-cyan-600" />
+                    <span>
+                      새 {adminFactoryPlantTab === 'factory2' ? '제2공장' : '제1공장'} 사진 추가 등록
+                    </span>
+                  </h4>
+                  <span className="text-xs text-slate-500">실제 공장 가공 설비/현장 사진 등록</span>
+                </div>
+
+                <form onSubmit={handleAddFactoryPhoto} className="space-y-5">
+                  {/* Factory Plant Selector (1공장 vs 2공장) */}
+                  <div className="p-3.5 bg-white rounded-xl border border-slate-200 space-y-2">
+                    <label className="block text-xs font-bold text-slate-800">
+                      등록 대상 공장 선택 <span className="text-red-500">*</span>
+                    </label>
+                    <div className="grid grid-cols-2 gap-3">
+                      <button
+                        type="button"
+                        onClick={() => setFactoryPhotoForm({ ...factoryPhotoForm, factoryType: 'factory1' })}
+                        className={`p-3 rounded-xl border text-left flex items-center gap-3 transition-all cursor-pointer ${
+                          factoryPhotoForm.factoryType === 'factory1' || !factoryPhotoForm.factoryType
+                            ? 'border-[#2BB8A1] bg-teal-50/60 ring-2 ring-[#2BB8A1]/30'
+                            : 'border-slate-200 hover:bg-slate-50'
+                        }`}
+                      >
+                        <div className={`p-2 rounded-lg ${
+                          factoryPhotoForm.factoryType === 'factory1' || !factoryPhotoForm.factoryType
+                            ? 'bg-[#2BB8A1] text-white'
+                            : 'bg-slate-100 text-slate-600'
+                        }`}>
+                          <Factory className="w-4 h-4" />
+                        </div>
+                        <div>
+                          <div className="text-xs font-extrabold text-slate-900">제1공장</div>
+                          <div className="text-[10px] text-slate-500">MCT & CNC 초정밀 가공 라인</div>
+                        </div>
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => setFactoryPhotoForm({ ...factoryPhotoForm, factoryType: 'factory2' })}
+                        className={`p-3 rounded-xl border text-left flex items-center gap-3 transition-all cursor-pointer ${
+                          factoryPhotoForm.factoryType === 'factory2'
+                            ? 'border-blue-600 bg-blue-50/60 ring-2 ring-blue-500/30'
+                            : 'border-slate-200 hover:bg-slate-50'
+                        }`}
+                      >
+                        <div className={`p-2 rounded-lg ${
+                          factoryPhotoForm.factoryType === 'factory2'
+                            ? 'bg-blue-600 text-white'
+                            : 'bg-slate-100 text-slate-600'
+                        }`}>
+                          <Factory className="w-4 h-4" />
+                        </div>
+                        <div>
+                          <div className="text-xs font-extrabold text-slate-900">제2공장</div>
+                          <div className="text-[10px] text-slate-500">초대형 부품/플레이트 가공 플랜트</div>
+                        </div>
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Image Upload & Preview */}
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 mb-1.5">
+                      현장 사진 <span className="text-red-500">*</span>
+                    </label>
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 items-start">
+                      <div className="sm:col-span-2 space-y-2">
+                        <div className="flex items-center gap-2">
+                          <input
+                            type="text"
+                            placeholder="이미지 URL 직접 입력 (https://... 또는 data:image/...)"
+                            value={factoryPhotoForm.image}
+                            onChange={(e) => setFactoryPhotoForm({ ...factoryPhotoForm, image: e.target.value })}
+                            className="w-full px-3.5 py-2.5 rounded-xl bg-white border border-slate-300 text-slate-900 font-mono text-xs"
+                          />
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <label className="px-4 py-2 rounded-xl bg-cyan-600 hover:bg-cyan-700 text-white font-bold text-xs cursor-pointer flex items-center gap-2 transition-colors">
+                            <Upload className="w-4 h-4" />
+                            <span>내 컴퓨터에서 사진 업로드</span>
+                            <input
+                              type="file"
+                              accept="image/*"
+                              className="hidden"
+                              onChange={(e) => {
+                                const file = e.target.files?.[0];
+                                if (file) {
+                                  handleFileUpload(file, (url) => {
+                                    setFactoryPhotoForm({ ...factoryPhotoForm, image: url });
+                                  });
+                                }
+                              }}
+                            />
+                          </label>
+                          <span className="text-[11px] text-slate-500">JPG, PNG, WEBP 지원</span>
+                        </div>
+                      </div>
+
+                      {/* Live Image Box */}
+                      <div className="relative h-28 bg-slate-950 rounded-xl overflow-hidden border border-slate-300 flex items-center justify-center">
+                        {factoryPhotoForm.image ? (
+                          <img
+                            src={factoryPhotoForm.image}
+                            alt="현장 사진 미리보기"
+                            className="w-full h-full object-contain"
+                          />
+                        ) : (
+                          <span className="text-[11px] text-slate-400 font-medium">사진 미리보기</span>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Category Tag & Title (KO) */}
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-3 pt-2 border-t border-slate-200">
+                    <div>
+                      <label className="block text-[11px] font-bold text-slate-700 mb-1">분류 태그 (KO)</label>
+                      <input
+                        type="text"
+                        placeholder="예: 제1공장 가공실, MCT 라인"
+                        value={factoryPhotoForm.tagKo}
+                        onChange={(e) => setFactoryPhotoForm({ ...factoryPhotoForm, tagKo: e.target.value })}
+                        className="w-full px-3 py-2 rounded-xl bg-white border border-slate-300 text-slate-900"
+                      />
+                    </div>
+                    <div className="md:col-span-2">
+                      <label className="block text-[11px] font-bold text-slate-700 mb-1">
+                        사진 제목 / 설비명 (KO) <span className="text-red-500">*</span>
+                      </label>
+                      <input
+                        type="text"
+                        placeholder="예: 두산·DNM 머시닝센터(MCT) 가공 라인"
+                        value={factoryPhotoForm.titleKo}
+                        onChange={(e) => setFactoryPhotoForm({ ...factoryPhotoForm, titleKo: e.target.value })}
+                        className="w-full px-3 py-2 rounded-xl bg-white border border-slate-300 font-bold text-slate-900"
+                        required
+                      />
+                    </div>
+                  </div>
+
+                  {/* Description (KO) */}
+                  <div>
+                    <label className="block text-[11px] font-bold text-slate-700 mb-1">상세 설명 (KO)</label>
+                    <input
+                      type="text"
+                      placeholder="예: 최신 고속 머시닝센터 가공 설비 및 갠트리 크레인 시스템"
+                      value={factoryPhotoForm.descKo}
+                      onChange={(e) => setFactoryPhotoForm({ ...factoryPhotoForm, descKo: e.target.value })}
+                      className="w-full px-3 py-2 rounded-xl bg-white border border-slate-300 text-slate-900"
+                    />
+                  </div>
+
+                  {/* Multilingual (EN & CN) Optional inputs */}
+                  <div className="p-3 bg-white rounded-xl border border-slate-200 space-y-3">
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-bold text-slate-700 flex items-center gap-1.5">
+                        <Globe className="w-3.5 h-3.5 text-cyan-600" />
+                        <span>다국어 번역 설정 (미입력 시 AI가 자동 번역)</span>
+                      </span>
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                      <div>
+                        <label className="block text-[10px] font-bold text-slate-600 mb-1">English Title</label>
+                        <input
+                          type="text"
+                          placeholder="e.g. Doosan/DNM MCT Machining Center Line"
+                          value={factoryPhotoForm.titleEn}
+                          onChange={(e) => setFactoryPhotoForm({ ...factoryPhotoForm, titleEn: e.target.value })}
+                          className="w-full px-2.5 py-1.5 rounded-lg bg-slate-50 border border-slate-200 text-xs"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-[10px] font-bold text-slate-600 mb-1">中文 标题</label>
+                        <input
+                          type="text"
+                          placeholder="例如: 斗山/DNM加工中心(MCT)生产线"
+                          value={factoryPhotoForm.titleCn}
+                          onChange={(e) => setFactoryPhotoForm({ ...factoryPhotoForm, titleCn: e.target.value })}
+                          className="w-full px-2.5 py-1.5 rounded-lg bg-slate-50 border border-slate-200 text-xs"
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="flex justify-end pt-2">
+                    <button
+                      type="submit"
+                      className={`px-5 py-2.5 rounded-xl text-white font-bold text-xs flex items-center gap-2 shadow-md cursor-pointer transition-colors ${
+                        factoryPhotoForm.factoryType === 'factory2'
+                          ? 'bg-blue-600 hover:bg-blue-700'
+                          : 'bg-cyan-600 hover:bg-cyan-700'
+                      }`}
+                    >
+                      <Plus className="w-4 h-4" />
+                      <span>{factoryPhotoForm.factoryType === 'factory2' ? '제2공장' : '제1공장'} 사진 등록</span>
+                    </button>
+                  </div>
+                </form>
+              </div>
+
+              {/* Registered Factory Photos List */}
+              <div className="space-y-4">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 p-3 bg-slate-100/80 rounded-xl border border-slate-200">
+                    <div className="flex items-center gap-2">
+                      <ImageIcon className="w-4 h-4 text-cyan-600" />
+                      <span className="text-sm font-bold text-slate-900">
+                        {adminFactoryPlantTab === 'factory1'
+                          ? '제1공장 등록 사진 목록'
+                          : adminFactoryPlantTab === 'factory2'
+                          ? '제2공장 등록 사진 목록'
+                          : '등록된 전체 공장 사진 목록'}
+                        {' '}({factoryPhotos.filter(p => adminFactoryPlantTab === 'all' ? true : (p.factoryType || 'factory1') === adminFactoryPlantTab).length}개)
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-1.5 text-[11px] text-slate-600 bg-white px-3 py-1 rounded-lg border border-slate-200 shadow-xs">
+                      <ArrowUpDown className="w-3.5 h-3.5 text-cyan-600" />
+                      <span>카드의 <strong>[위로] / [아래로]</strong> 버튼 또는 <strong>[순서 번호]</strong>로 슬라이드 노출 순서를 변경할 수 있습니다.</span>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {(() => {
+                      const filteredList = factoryPhotos.filter((p) =>
+                        adminFactoryPlantTab === 'all' ? true : (p.factoryType || 'factory1') === adminFactoryPlantTab
+                      );
+
+                      return filteredList.map((photo, idx) => {
+                        const isEditingThis = editingFactoryPhotoId === photo.id && inlineFactoryPhotoForm;
+                        const isPlant2 = photo.factoryType === 'factory2';
+                        const isFirst = idx === 0;
+                        const isLast = idx === filteredList.length - 1;
+
+                        return (
+                          <div
+                            key={photo.id}
+                            className={`bg-white p-4 rounded-2xl border transition-all shadow-sm ${
+                              isEditingThis
+                                ? 'border-cyan-500 ring-2 ring-cyan-500/20 bg-cyan-50/10'
+                                : 'border-slate-200 hover:border-slate-300'
+                            }`}
+                          >
+                            {isEditingThis ? (
+                              /* INLINE EDIT FORM FOR THIS PHOTO */
+                              <form onSubmit={handleSaveInlineEditFactoryPhoto} className="space-y-4">
+                                <div className="flex items-center justify-between pb-2 border-b border-cyan-200">
+                                  <span className="font-extrabold text-cyan-700 flex items-center gap-1.5 text-xs">
+                                    <Edit3 className="w-3.5 h-3.5" />
+                                    사진 #{idx + 1} 정보 수정
+                                  </span>
+                                  <button
+                                    type="button"
+                                    onClick={handleCancelInlineEditFactoryPhoto}
+                                    className="px-2.5 py-1 rounded-lg bg-slate-200 hover:bg-slate-300 text-slate-700 text-[11px] font-semibold"
+                                  >
+                                    취소
+                                  </button>
+                                </div>
+
+                                {/* Factory Type Selector */}
+                                <div>
+                                  <label className="block text-[11px] font-bold text-slate-700 mb-1">공장 구분</label>
+                                  <div className="grid grid-cols-2 gap-2">
+                                    <button
+                                      type="button"
+                                      onClick={() => setInlineFactoryPhotoForm({ ...inlineFactoryPhotoForm, factoryType: 'factory1' })}
+                                      className={`px-3 py-1.5 rounded-lg text-xs font-bold border flex items-center justify-center gap-1.5 transition-all ${
+                                        inlineFactoryPhotoForm.factoryType === 'factory1' || !inlineFactoryPhotoForm.factoryType
+                                          ? 'bg-[#2BB8A1] text-white border-[#2BB8A1] shadow-sm'
+                                          : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'
+                                      }`}
+                                    >
+                                      <Factory className="w-3 h-3" />
+                                      <span>제1공장</span>
+                                    </button>
+                                    <button
+                                      type="button"
+                                      onClick={() => setInlineFactoryPhotoForm({ ...inlineFactoryPhotoForm, factoryType: 'factory2' })}
+                                      className={`px-3 py-1.5 rounded-lg text-xs font-bold border flex items-center justify-center gap-1.5 transition-all ${
+                                        inlineFactoryPhotoForm.factoryType === 'factory2'
+                                          ? 'bg-blue-600 text-white border-blue-600 shadow-sm'
+                                          : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'
+                                      }`}
+                                    >
+                                      <Factory className="w-3 h-3" />
+                                      <span>제2공장</span>
+                                    </button>
+                                  </div>
+                                </div>
+
+                                {/* Image Change */}
+                                <div>
+                                  <label className="block text-[11px] font-bold text-slate-700 mb-1">
+                                    사진 변경 <span className="text-red-500">*</span>
+                                  </label>
+                                  <div className="flex gap-2 items-center">
+                                    <input
+                                      type="text"
+                                      placeholder="이미지 URL"
+                                      value={inlineFactoryPhotoForm.image}
+                                      onChange={(e) =>
+                                        setInlineFactoryPhotoForm({ ...inlineFactoryPhotoForm, image: e.target.value })
+                                      }
+                                      className="flex-1 px-3 py-1.5 rounded-lg bg-white border border-slate-300 text-xs font-mono"
+                                    />
+                                    <label className="px-3 py-1.5 rounded-lg bg-cyan-600 hover:bg-cyan-700 text-white font-bold text-xs cursor-pointer flex items-center gap-1 shrink-0">
+                                      <Upload className="w-3.5 h-3.5" />
+                                      <span>파일 선택</span>
+                                      <input
+                                        type="file"
+                                        accept="image/*"
+                                        className="hidden"
+                                        onChange={(e) => {
+                                          const file = e.target.files?.[0];
+                                          if (file) {
+                                            handleFileUpload(file, (url) => {
+                                              setInlineFactoryPhotoForm({ ...inlineFactoryPhotoForm, image: url });
+                                            });
+                                          }
+                                        }}
+                                      />
+                                    </label>
+                                  </div>
+                                </div>
+
+                                {/* Tag & Title KO */}
+                                <div className="grid grid-cols-3 gap-2">
+                                  <div>
+                                    <label className="block text-[10px] font-bold text-slate-600 mb-0.5">태그 (KO)</label>
+                                    <input
+                                      type="text"
+                                      value={inlineFactoryPhotoForm.tagKo}
+                                      onChange={(e) =>
+                                        setInlineFactoryPhotoForm({ ...inlineFactoryPhotoForm, tagKo: e.target.value })
+                                      }
+                                      className="w-full px-2.5 py-1.5 rounded-lg bg-white border border-slate-300 text-xs"
+                                    />
+                                  </div>
+                                  <div className="col-span-2">
+                                    <label className="block text-[10px] font-bold text-slate-600 mb-0.5">제목 (KO)</label>
+                                    <input
+                                      type="text"
+                                      value={inlineFactoryPhotoForm.titleKo}
+                                      onChange={(e) =>
+                                        setInlineFactoryPhotoForm({ ...inlineFactoryPhotoForm, titleKo: e.target.value })
+                                      }
+                                      className="w-full px-2.5 py-1.5 rounded-lg bg-white border border-slate-300 font-bold text-xs"
+                                    />
+                                  </div>
+                                </div>
+
+                                {/* Description KO */}
+                                <div>
+                                  <label className="block text-[10px] font-bold text-slate-600 mb-0.5">설명 (KO)</label>
+                                  <input
+                                    type="text"
+                                    value={inlineFactoryPhotoForm.descKo}
+                                    onChange={(e) =>
+                                      setInlineFactoryPhotoForm({ ...inlineFactoryPhotoForm, descKo: e.target.value })
+                                    }
+                                    className="w-full px-2.5 py-1.5 rounded-lg bg-white border border-slate-300 text-xs"
+                                  />
+                                </div>
+
+                                {/* Multilingual EN / CN */}
+                                <div className="grid grid-cols-2 gap-2 pt-1 border-t border-slate-100">
+                                  <div>
+                                    <label className="block text-[10px] font-bold text-slate-600 mb-0.5">Title (EN)</label>
+                                    <input
+                                      type="text"
+                                      value={inlineFactoryPhotoForm.titleEn || ''}
+                                      onChange={(e) =>
+                                        setInlineFactoryPhotoForm({ ...inlineFactoryPhotoForm, titleEn: e.target.value })
+                                      }
+                                      className="w-full px-2 py-1 rounded bg-slate-50 border border-slate-200 text-[11px]"
+                                    />
+                                  </div>
+                                  <div>
+                                    <label className="block text-[10px] font-bold text-slate-600 mb-0.5">Title (CN)</label>
+                                    <input
+                                      type="text"
+                                      value={inlineFactoryPhotoForm.titleCn || ''}
+                                      onChange={(e) =>
+                                        setInlineFactoryPhotoForm({ ...inlineFactoryPhotoForm, titleCn: e.target.value })
+                                      }
+                                      className="w-full px-2 py-1 rounded bg-slate-50 border border-slate-200 text-[11px]"
+                                    />
+                                  </div>
+                                </div>
+
+                                <div className="flex justify-end gap-2 pt-2 border-t border-slate-200">
+                                  <button
+                                    type="button"
+                                    onClick={handleCancelInlineEditFactoryPhoto}
+                                    className="px-3 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold"
+                                  >
+                                    취소
+                                  </button>
+                                  <button
+                                    type="submit"
+                                    className="px-4 py-1.5 rounded-lg bg-cyan-600 hover:bg-cyan-700 text-white text-xs font-bold flex items-center gap-1 shadow-sm cursor-pointer"
+                                  >
+                                    <Check className="w-3.5 h-3.5" />
+                                    <span>수정 완료</span>
+                                  </button>
+                                </div>
+                              </form>
+                            ) : (
+                              /* PHOTO DISPLAY CARD */
+                              <div className="space-y-3">
+                                {/* Order Controller Bar on Card Top */}
+                                <div className="flex items-center justify-between gap-2 p-2 bg-slate-50 rounded-xl border border-slate-200">
+                                  <div className="flex items-center gap-2">
+                                    <span className="flex items-center justify-center w-6 h-6 rounded-full bg-slate-900 text-white text-xs font-mono font-black shadow-xs">
+                                      {idx + 1}
+                                    </span>
+                                    <div className="flex items-center gap-1">
+                                      <span className="text-[11px] text-slate-500 font-bold">순서:</span>
+                                      <select
+                                        value={idx}
+                                        onChange={(e) => {
+                                          const targetIdx = Number(e.target.value);
+                                          moveFactoryPhotoToPosition(photo.id, targetIdx, adminFactoryPlantTab);
+                                          showToast(`'${photo.titleKo}' 사진이 ${targetIdx + 1}번째 순서로 변경되었습니다.`);
+                                        }}
+                                        className="px-2 py-1 rounded-lg bg-white border border-slate-300 text-xs font-bold text-slate-800 cursor-pointer shadow-xs focus:ring-1 focus:ring-cyan-500"
+                                      >
+                                        {filteredList.map((_, pIdx) => (
+                                          <option key={pIdx} value={pIdx}>
+                                            {pIdx + 1}번째 {pIdx === 0 ? '(맨 앞)' : pIdx === filteredList.length - 1 ? '(맨 뒤)' : ''}
+                                          </option>
+                                        ))}
+                                      </select>
+                                    </div>
+                                  </div>
+
+                                  {/* Up / Down Move Buttons */}
+                                  <div className="flex items-center gap-1">
+                                    <button
+                                      type="button"
+                                      disabled={isFirst}
+                                      onClick={() => {
+                                        moveFactoryPhotoInFilter(photo.id, 'up', adminFactoryPlantTab);
+                                        showToast(`'${photo.titleKo}' 사진의 순서가 앞으로 이동되었습니다.`);
+                                      }}
+                                      className={`px-2 py-1 rounded-lg border text-xs font-bold flex items-center gap-1 transition-all ${
+                                        isFirst
+                                          ? 'bg-slate-100 text-slate-300 border-slate-200 cursor-not-allowed opacity-50'
+                                          : 'bg-white hover:bg-cyan-50 hover:text-cyan-700 hover:border-cyan-300 text-slate-700 border-slate-300 shadow-xs cursor-pointer active:scale-95'
+                                      }`}
+                                      title="위로 (앞 순서로 이동)"
+                                    >
+                                      <ChevronUp className="w-3.5 h-3.5" />
+                                      <span className="text-[11px]">위로</span>
+                                    </button>
+                                    <button
+                                      type="button"
+                                      disabled={isLast}
+                                      onClick={() => {
+                                        moveFactoryPhotoInFilter(photo.id, 'down', adminFactoryPlantTab);
+                                        showToast(`'${photo.titleKo}' 사진의 순서가 뒤로 이동되었습니다.`);
+                                      }}
+                                      className={`px-2 py-1 rounded-lg border text-xs font-bold flex items-center gap-1 transition-all ${
+                                        isLast
+                                          ? 'bg-slate-100 text-slate-300 border-slate-200 cursor-not-allowed opacity-50'
+                                          : 'bg-white hover:bg-cyan-50 hover:text-cyan-700 hover:border-cyan-300 text-slate-700 border-slate-300 shadow-xs cursor-pointer active:scale-95'
+                                      }`}
+                                      title="아래로 (다음 순서로 이동)"
+                                    >
+                                      <ChevronDown className="w-3.5 h-3.5" />
+                                      <span className="text-[11px]">아래로</span>
+                                    </button>
+                                  </div>
+                                </div>
+
+                                <div className="relative aspect-[16/10] rounded-xl overflow-hidden bg-slate-950 border border-slate-800 group flex items-center justify-center">
+                                  <img
+                                    src={photo.image}
+                                    alt={photo.titleKo}
+                                    className="w-full h-full object-contain group-hover:scale-105 transition-transform duration-500"
+                                  />
+                                  <div className="absolute top-2 left-2 flex items-center gap-1.5">
+                                    <span className="px-2 py-0.5 rounded-md bg-slate-900/80 backdrop-blur text-white text-[10px] font-mono font-bold">
+                                      #{idx + 1}
+                                    </span>
+                                    <span className={`px-2 py-0.5 rounded-md text-white text-[10px] font-bold shadow ${
+                                      isPlant2 ? 'bg-blue-600' : 'bg-[#2BB8A1]'
+                                    }`}>
+                                      {isPlant2 ? '제2공장' : '제1공장'}
+                                    </span>
+                                    {photo.tagKo && (
+                                      <span className="px-2 py-0.5 rounded-md bg-slate-800/80 text-slate-200 text-[10px] font-bold">
+                                        {photo.tagKo}
+                                      </span>
+                                    )}
+                                  </div>
+                                </div>
+
+                                <div>
+                                  <h5 className="font-bold text-slate-900 text-xs leading-snug line-clamp-1">
+                                    {photo.titleKo}
+                                  </h5>
+                                  {photo.descKo && (
+                                    <p className="text-[11px] text-slate-500 mt-0.5 line-clamp-1">
+                                      {photo.descKo}
+                                    </p>
+                                  )}
+                                  {(photo.titleEn || photo.titleCn) && (
+                                    <p className="text-[10px] text-slate-400 mt-0.5 font-mono">
+                                      EN: {photo.titleEn || '-'} | CN: {photo.titleCn || '-'}
+                                    </p>
+                                  )}
+                                </div>
+
+                                <div className="flex items-center justify-between gap-2 pt-2 border-t border-slate-100">
+                                  <div className="flex items-center gap-1">
+                                    <button
+                                      type="button"
+                                      onClick={() => {
+                                        const newType = isPlant2 ? 'factory1' : 'factory2';
+                                        updateFactoryPhoto(photo.id, {
+                                          ...photo,
+                                          factoryType: newType,
+                                          tagKo: newType === 'factory2' ? '제2공장' : '제1공장',
+                                        });
+                                        showToast(`${newType === 'factory2' ? '제2공장' : '제1공장'}으로 이동되었습니다.`);
+                                      }}
+                                      className="px-2 py-1 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 text-[10px] font-bold cursor-pointer transition-colors"
+                                      title="공장 구분 즉시 변경"
+                                    >
+                                      {isPlant2 ? '➡️ 1공장으로 이동' : '➡️ 2공장으로 이동'}
+                                    </button>
+                                  </div>
+
+                                  <div className="flex items-center gap-2">
+                                    <button
+                                      type="button"
+                                      onClick={() => handleStartInlineEditFactoryPhoto(photo)}
+                                      className="px-3 py-1.5 rounded-lg bg-cyan-50 hover:bg-cyan-100 border border-cyan-200 text-cyan-700 font-bold flex items-center gap-1 text-xs transition-colors cursor-pointer"
+                                    >
+                                      <Edit3 className="w-3.5 h-3.5" />
+                                      <span>수정</span>
+                                    </button>
+                                    <button
+                                      type="button"
+                                      onClick={() => {
+                                        if (factoryPhotos.length <= 1) {
+                                          showToast('⚠️ 최소 1개 이상의 현장 사진이 유지되어야 합니다.');
+                                          return;
+                                        }
+                                        if (window.confirm(`'${photo.titleKo}' 사진을 삭제하시겠습니까?`)) {
+                                          deleteFactoryPhoto(photo.id);
+                                          showToast('공장 현장 사진이 삭제되었습니다.');
+                                        }
+                                      }}
+                                      className="px-3 py-1.5 rounded-lg bg-red-50 hover:bg-red-100 border border-red-200 text-red-600 font-bold flex items-center gap-1 text-xs transition-colors cursor-pointer"
+                                    >
+                                      <Trash2 className="w-3.5 h-3.5" />
+                                      <span>삭제</span>
+                                    </button>
+                                  </div>
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                        );
+                      });
+                    })()}
+                  </div>
+                </div>
+              </div>
           )}
 
           {/* TAB 1: Company Profile & About */}
@@ -2692,12 +3563,11 @@ export const AdminDashboardModal: React.FC = () => {
                             type="button"
                             onClick={() => {
                               if (productCategories.length <= 1) {
-                                alert('최소 1개 이상의 카테고리가 유지되어야 합니다.');
+                                showToast('⚠️ 최소 1개 이상의 카테고리가 유지되어야 합니다.');
                                 return;
                               }
-                              if (window.confirm(`'${cat.name}' 카테고리를 삭제하시겠습니까?`)) {
-                                deleteProductCategory(cat.id);
-                              }
+                              deleteProductCategory(cat.id);
+                              showToast(`'${cat.name}' 카테고리가 삭제되었습니다.`);
                             }}
                             className="p-1 rounded-lg bg-red-50 text-red-600 hover:bg-red-100 border border-red-200 cursor-pointer"
                             title="카테고리 삭제"
@@ -2711,25 +3581,137 @@ export const AdminDashboardModal: React.FC = () => {
                 </div>
               </div>
 
-              {/* 2. Add Product Form (보증공차와 가공소재 제외) */}
+              {/* 2. Add Product Form (제품명, P/N, MAKER 등록, 설명 제거) */}
               <div className="p-5 bg-slate-50 rounded-2xl border border-slate-200 space-y-4">
-                <h4 className="text-sm font-bold text-slate-900 flex items-center gap-2">
-                  <Plus className="w-4 h-4 text-purple-700" />
-                  <span>신규 정밀 가공 제품 등록</span>
-                </h4>
+                <div className="flex items-center justify-between">
+                  <h4 className="text-sm font-bold text-slate-900 flex items-center gap-2">
+                    <Plus className="w-4 h-4 text-purple-700" />
+                    <span>신규 정밀 가공 제품 등록</span>
+                  </h4>
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      if (!newProdTitle.trim()) return;
+                      setIsTranslating(true);
+                      try {
+                        const transTitle = await autoTranslateText(newProdTitle, 'Precision CNC machined part title');
+                        setNewProdTitleEn(transTitle.english);
+                        setNewProdTitleCn(transTitle.chinese);
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  <input
-                    type="text"
-                    placeholder="제품명 (예: PENDULUM V/V PLATE)"
-                    value={newProdTitle}
-                    onChange={(e) => setNewProdTitle(e.target.value)}
-                    className="px-3.5 py-2 rounded-xl bg-white border border-slate-300 font-bold text-xs"
-                  />
+                        if (newProdPN.trim()) {
+                          setNewProdPNEn(newProdPN.trim());
+                          setNewProdPNCn(newProdPN.trim());
+                        }
+
+                        if (newProdMaker.trim()) {
+                          const transMaker = await autoTranslateText(newProdMaker, 'Semiconductor equipment maker company');
+                          setNewProdMakerEn(transMaker.english || newProdMaker);
+                          setNewProdMakerCn(transMaker.chinese || newProdMaker);
+                        }
+                      } catch (err) {
+                        console.error(err);
+                      } finally {
+                        setIsTranslating(false);
+                      }
+                    }}
+                    className="px-2.5 py-1 bg-amber-400 hover:bg-amber-500 text-slate-900 font-extrabold text-[10px] rounded-lg flex items-center gap-1 shadow-sm cursor-pointer"
+                  >
+                    <Sparkles className="w-3 h-3" />
+                    <span>✨ 영문/중문 자동입력</span>
+                  </button>
+                </div>
+
+                {/* Row 1: Product Name (KO, EN, CN) */}
+                <div className="space-y-1">
+                  <label className="block font-bold text-slate-700 text-xs">제품명 (Product Name) *</label>
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                    <input
+                      type="text"
+                      placeholder="제품명 (KO, 예: Chamber out liner)"
+                      value={newProdTitle}
+                      onChange={(e) => setNewProdTitle(e.target.value)}
+                      className="px-3 py-2 rounded-xl bg-white border border-slate-300 font-bold text-xs"
+                    />
+                    <input
+                      type="text"
+                      placeholder="제품명 (EN, 예: Chamber out liner)"
+                      value={newProdTitleEn}
+                      onChange={(e) => setNewProdTitleEn(e.target.value)}
+                      className="px-3 py-2 rounded-xl bg-white border border-slate-300 font-mono text-xs"
+                    />
+                    <input
+                      type="text"
+                      placeholder="제품명 (CN, 예: 摆阀阀板)"
+                      value={newProdTitleCn}
+                      onChange={(e) => setNewProdTitleCn(e.target.value)}
+                      className="px-3 py-2 rounded-xl bg-white border border-slate-300 text-xs"
+                    />
+                  </div>
+                </div>
+
+                {/* Row 2: P/N (KO, EN, CN) */}
+                <div className="space-y-1">
+                  <label className="block font-bold text-slate-700 text-xs">P/N (Part Number)</label>
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                    <input
+                      type="text"
+                      placeholder="P/N (KO/공통, 예: 0020-34694)"
+                      value={newProdPN}
+                      onChange={(e) => setNewProdPN(e.target.value)}
+                      className="px-3 py-2 rounded-xl bg-white border border-slate-300 font-mono text-xs font-semibold"
+                    />
+                    <input
+                      type="text"
+                      placeholder="P/N (EN, 예: 0020-34694)"
+                      value={newProdPNEn}
+                      onChange={(e) => setNewProdPNEn(e.target.value)}
+                      className="px-3 py-2 rounded-xl bg-white border border-slate-300 font-mono text-xs"
+                    />
+                    <input
+                      type="text"
+                      placeholder="P/N (CN, 예: 0020-34694)"
+                      value={newProdPNCn}
+                      onChange={(e) => setNewProdPNCn(e.target.value)}
+                      className="px-3 py-2 rounded-xl bg-white border border-slate-300 font-mono text-xs"
+                    />
+                  </div>
+                </div>
+
+                {/* Row 3: MAKER (KO, EN, CN) */}
+                <div className="space-y-1">
+                  <label className="block font-bold text-slate-700 text-xs">MAKER (제조사 / 적용 설비사)</label>
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                    <input
+                      type="text"
+                      placeholder="MAKER (KO, 예: Applied Materials)"
+                      value={newProdMaker}
+                      onChange={(e) => setNewProdMaker(e.target.value)}
+                      className="px-3 py-2 rounded-xl bg-white border border-slate-300 text-xs font-semibold"
+                    />
+                    <input
+                      type="text"
+                      placeholder="MAKER (EN, 예: Applied Materials)"
+                      value={newProdMakerEn}
+                      onChange={(e) => setNewProdMakerEn(e.target.value)}
+                      className="px-3 py-2 rounded-xl bg-white border border-slate-300 text-xs"
+                    />
+                    <input
+                      type="text"
+                      placeholder="MAKER (CN, 예: 应用材料)"
+                      value={newProdMakerCn}
+                      onChange={(e) => setNewProdMakerCn(e.target.value)}
+                      className="px-3 py-2 rounded-xl bg-white border border-slate-300 text-xs"
+                    />
+                  </div>
+                </div>
+
+                {/* Row 4: Category Selection */}
+                <div className="space-y-1">
+                  <label className="block font-bold text-slate-700 text-xs">부품 카테고리</label>
                   <select
                     value={newProdCat}
                     onChange={(e: any) => setNewProdCat(e.target.value)}
-                    className="px-3.5 py-2 rounded-xl bg-white border border-slate-300 font-bold text-xs"
+                    className="w-full px-3.5 py-2 rounded-xl bg-white border border-slate-300 font-bold text-xs"
                   >
                     {productCategories.map((cat) => (
                       <option key={cat.id} value={cat.id}>
@@ -2739,21 +3721,17 @@ export const AdminDashboardModal: React.FC = () => {
                   </select>
                 </div>
 
-                <div>
-                  <input
-                    type="text"
-                    placeholder="제품 상세 설명 (예: 초정밀 CNC 5축 가공 및 특수 표면처리 부품)"
-                    value={newProdDesc}
-                    onChange={(e) => setNewProdDesc(e.target.value)}
-                    className="w-full px-3.5 py-2 rounded-xl bg-white border border-slate-300 text-xs"
-                  />
-                </div>
-
                 {/* Product Image Upload */}
                 <div className="p-3 bg-white rounded-xl border border-slate-200 space-y-2">
-                  <label className="block font-semibold text-slate-700 text-xs">제품 대표 이미지 파일 업로드</label>
+                  <div className="flex items-center justify-between">
+                    <label className="block font-semibold text-slate-700 text-xs">제품 대표 이미지 파일 업로드</label>
+                    <span className="text-[11px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-200 flex items-center gap-1">
+                      <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
+                      <span>BAEKSONG ENG 워터마크 자동 합성</span>
+                    </span>
+                  </div>
                   <div className="flex items-center gap-3">
-                    <label className="px-3.5 py-2 rounded-xl bg-purple-100 hover:bg-purple-200 text-purple-900 font-bold text-xs cursor-pointer border border-purple-300 flex items-center gap-1.5">
+                    <label className="px-3.5 py-2 rounded-xl bg-purple-100 hover:bg-purple-200 text-purple-900 font-bold text-xs cursor-pointer border border-purple-300 flex items-center gap-1.5 shrink-0">
                       <Upload className="w-4 h-4 text-purple-700" />
                       <span>PC에서 이미지 선택</span>
                       <input
@@ -2762,9 +3740,13 @@ export const AdminDashboardModal: React.FC = () => {
                         className="hidden"
                         onChange={(e) => {
                           if (e.target.files?.[0]) {
-                            handleFileUpload(e.target.files[0], (dataUrl) => {
-                              setNewProdImageUrl(dataUrl);
-                            });
+                            handleFileUpload(
+                              e.target.files[0],
+                              (dataUrl) => {
+                                setNewProdImageUrl(dataUrl);
+                              },
+                              { watermark: true }
+                            );
                           }
                         }}
                       />
@@ -2777,6 +3759,17 @@ export const AdminDashboardModal: React.FC = () => {
                       className="flex-1 px-3 py-1.5 rounded-lg border border-slate-300 font-mono text-xs"
                     />
                   </div>
+                  {newProdImageUrl && (
+                    <div className="pt-2 flex items-center gap-3">
+                      <div className="relative w-16 h-16 rounded-lg border border-slate-200 overflow-hidden bg-white flex items-center justify-center p-1 shrink-0">
+                        <img src={newProdImageUrl} alt="preview" className="w-full h-full object-contain" />
+                        <ProductWatermarkOverlay opacity={0.35} size="sm" />
+                      </div>
+                      <span className="text-[11px] text-slate-500">
+                        업로드된 이미지에 BAEKSONG ENG 정품 워터마크가 안전하게 포함되었습니다.
+                      </span>
+                    </div>
+                  )}
                 </div>
 
                 <button
@@ -2787,18 +3780,24 @@ export const AdminDashboardModal: React.FC = () => {
                       return;
                     }
                     setIsTranslating(true);
-                    let titleEn = '', titleCn = '';
-                    let descEn = '', descCn = '';
+                    let titleEn = newProdTitleEn, titleCn = newProdTitleCn;
+                    let pnVal = newProdPN.trim();
+                    let pnEn = (newProdPNEn || newProdPN).trim();
+                    let pnCn = (newProdPNCn || newProdPN).trim();
+                    let makerEn = newProdMakerEn || newProdMaker;
+                    let makerCn = newProdMakerCn || newProdMaker;
 
                     try {
-                      const transTitle = await autoTranslateText(newProdTitle, 'Precision CNC machined part title');
-                      titleEn = transTitle.english;
-                      titleCn = transTitle.chinese;
+                      if (!titleEn || !titleCn) {
+                        const transTitle = await autoTranslateText(newProdTitle, 'Precision CNC machined part title');
+                        titleEn = titleEn || transTitle.english;
+                        titleCn = titleCn || transTitle.chinese;
+                      }
 
-                      if (newProdDesc) {
-                        const transDesc = await autoTranslateText(newProdDesc, 'Precision CNC machined part description');
-                        descEn = transDesc.english;
-                        descCn = transDesc.chinese;
+                      if (newProdMaker && (!newProdMakerEn || !newProdMakerCn)) {
+                        const transMaker = await autoTranslateText(newProdMaker, 'Semiconductor equipment maker company');
+                        makerEn = makerEn || transMaker.english;
+                        makerCn = makerCn || transMaker.chinese;
                       }
                     } catch (err) {
                       console.error(err);
@@ -2809,34 +3808,45 @@ export const AdminDashboardModal: React.FC = () => {
                     const selectedCategoryObj = productCategories.find((c) => c.id === newProdCat);
 
                     addProduct({
-                      title: newProdTitle,
-                      titleEn: titleEn || newProdTitle,
-                      titleCn: titleCn || newProdTitle,
+                      title: newProdTitle.trim(),
+                      titleEn: titleEn || newProdTitle.trim(),
+                      titleCn: titleCn || newProdTitle.trim(),
+                      pn: pnVal || undefined,
+                      pnEn: pnEn || undefined,
+                      pnCn: pnCn || undefined,
+                      pl: pnVal || undefined,
+                      plEn: pnEn || undefined,
+                      plCn: pnCn || undefined,
+                      maker: newProdMaker.trim() || undefined,
+                      makerEn: makerEn.trim() || undefined,
+                      makerCn: makerCn.trim() || undefined,
                       category: newProdCat,
                       categoryName: selectedCategoryObj?.name || newProdCat.toUpperCase(),
-                      surfaceFinish: 'Precision Machined',
-                      description: newProdDesc || '반도체 초정밀 메탈 부품',
-                      descriptionEn: descEn || 'Semiconductor precision metal part',
-                      descriptionCn: descCn || '半导体超精密金属零部件',
                       imageUrl:
                         newProdImageUrl ||
                         'https://images.unsplash.com/photo-1581092335397-9583fe92d232?auto=format&fit=crop&w=800&q=80',
                       featured: true,
-                      specs: {},
                     });
-                    alert('제품이 등록되었으며 영문 및 중문 번역이 Gemini AI에 의해 자동 반영되었습니다.');
+                    alert('제품이 등록되었으며 영문 및 중문 정보가 저장되었습니다.');
                     setNewProdTitle('');
-                    setNewProdDesc('');
+                    setNewProdTitleEn('');
+                    setNewProdTitleCn('');
+                    setNewProdPN('');
+                    setNewProdPNEn('');
+                    setNewProdPNCn('');
+                    setNewProdMaker('');
+                    setNewProdMakerEn('');
+                    setNewProdMakerCn('');
                     setNewProdImageUrl('');
                   }}
                   className="px-5 py-2.5 bg-purple-600 hover:bg-purple-700 text-white font-bold text-xs rounded-xl flex items-center gap-1.5 shadow-md cursor-pointer"
                 >
                   <Plus className="w-4 h-4" />
-                  <span>제품 등록 (✨ AI 영/중문 번역)</span>
+                  <span>제품 등록 완료</span>
                 </button>
               </div>
 
-              {/* 3. Products Catalog List (보증공차와 가공소재 미표시) */}
+              {/* 3. Products Catalog List (제품명, P/N, MAKER 관리) */}
               <div className="space-y-4">
                 <h4 className="font-bold text-slate-900 text-sm">등록된 가공 제품 목록 ({products.length})</h4>
                 <div className="space-y-3">
@@ -2860,18 +3870,29 @@ export const AdminDashboardModal: React.FC = () => {
                                 setIsTranslating(true);
                                 try {
                                   const titleTrans = await autoTranslateText(editingProductForm.title, 'Precision CNC machined part title');
-                                  const descTrans = editingProductForm.description
-                                    ? await autoTranslateText(editingProductForm.description, 'Precision CNC machined part description')
-                                    : { english: '', chinese: '' };
+                                  let makerTrans = { english: editingProductForm.maker || '', chinese: editingProductForm.maker || '' };
+                                  if (editingProductForm.maker) {
+                                    makerTrans = await autoTranslateText(editingProductForm.maker, 'Semiconductor equipment maker company');
+                                  }
+
+                                  const curPN = editingProductForm.pn || editingProductForm.pl || '';
+                                  const curPNEn = editingProductForm.pnEn || editingProductForm.plEn || curPN;
+                                  const curPNCn = editingProductForm.pnCn || editingProductForm.plCn || curPN;
 
                                   setEditingProductForm({
                                     ...editingProductForm,
                                     titleEn: titleTrans.english,
                                     titleCn: titleTrans.chinese,
-                                    descriptionEn: descTrans.english || editingProductForm.description,
-                                    descriptionCn: descTrans.chinese || editingProductForm.description,
+                                    pn: curPN,
+                                    pnEn: curPNEn,
+                                    pnCn: curPNCn,
+                                    pl: curPN,
+                                    plEn: curPNEn,
+                                    plCn: curPNCn,
+                                    makerEn: makerTrans.english || editingProductForm.maker,
+                                    makerCn: makerTrans.chinese || editingProductForm.maker,
                                   });
-                                  alert('✨ 한국어를 바탕으로 영문 및 중문 번역이 성공적으로 생성되었습니다.');
+                                  alert('✨ 제품명 및 MAKER 영문/중문 자동 번역이 적용되었습니다.');
                                 } catch (err) {
                                   console.error(err);
                                   alert('번역 중 오류가 발생했습니다.');
@@ -2888,16 +3909,110 @@ export const AdminDashboardModal: React.FC = () => {
                           </div>
 
                           {/* Form Grid */}
-                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+                          <div className="space-y-3 text-xs">
+                            {/* Product Name (KO, EN, CN) */}
                             <div>
-                              <label className="block font-bold text-slate-700 mb-1">제품명 (한글)</label>
-                              <input
-                                type="text"
-                                value={editingProductForm.title}
-                                onChange={(e) => setEditingProductForm({ ...editingProductForm, title: e.target.value })}
-                                className="w-full px-3 py-2 rounded-xl bg-white border border-slate-300 font-bold"
-                              />
+                              <label className="block font-bold text-slate-700 mb-1">제품명 (Product Name)</label>
+                              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                                <input
+                                  type="text"
+                                  placeholder="제품명 (한글)"
+                                  value={editingProductForm.title}
+                                  onChange={(e) => setEditingProductForm({ ...editingProductForm, title: e.target.value })}
+                                  className="px-3 py-2 rounded-xl bg-white border border-slate-300 font-bold"
+                                />
+                                <input
+                                  type="text"
+                                  placeholder="English"
+                                  value={editingProductForm.titleEn || ''}
+                                  onChange={(e) => setEditingProductForm({ ...editingProductForm, titleEn: e.target.value })}
+                                  className="px-3 py-2 rounded-xl bg-white border border-slate-300 font-mono"
+                                />
+                                <input
+                                  type="text"
+                                  placeholder="中文"
+                                  value={editingProductForm.titleCn || ''}
+                                  onChange={(e) => setEditingProductForm({ ...editingProductForm, titleCn: e.target.value })}
+                                  className="px-3 py-2 rounded-xl bg-white border border-slate-300"
+                                />
+                              </div>
                             </div>
+
+                            {/* P/N (KO, EN, CN) */}
+                            <div>
+                              <label className="block font-bold text-slate-700 mb-1">P/N (Part Number)</label>
+                              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                                <input
+                                  type="text"
+                                  placeholder="P/N (한글/공통)"
+                                  value={editingProductForm.pn || editingProductForm.pl || ''}
+                                  onChange={(e) =>
+                                    setEditingProductForm({
+                                      ...editingProductForm,
+                                      pn: e.target.value,
+                                      pl: e.target.value,
+                                    })
+                                  }
+                                  className="px-3 py-2 rounded-xl bg-white border border-slate-300 font-mono font-semibold"
+                                />
+                                <input
+                                  type="text"
+                                  placeholder="P/N (English)"
+                                  value={editingProductForm.pnEn || editingProductForm.plEn || ''}
+                                  onChange={(e) =>
+                                    setEditingProductForm({
+                                      ...editingProductForm,
+                                      pnEn: e.target.value,
+                                      plEn: e.target.value,
+                                    })
+                                  }
+                                  className="px-3 py-2 rounded-xl bg-white border border-slate-300 font-mono"
+                                />
+                                <input
+                                  type="text"
+                                  placeholder="P/N (中文)"
+                                  value={editingProductForm.pnCn || editingProductForm.plCn || ''}
+                                  onChange={(e) =>
+                                    setEditingProductForm({
+                                      ...editingProductForm,
+                                      pnCn: e.target.value,
+                                      plCn: e.target.value,
+                                    })
+                                  }
+                                  className="px-3 py-2 rounded-xl bg-white border border-slate-300 font-mono"
+                                />
+                              </div>
+                            </div>
+
+                            {/* MAKER (KO, EN, CN) */}
+                            <div>
+                              <label className="block font-bold text-slate-700 mb-1">MAKER (제조사 / 적용 설비사)</label>
+                              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                                <input
+                                  type="text"
+                                  placeholder="MAKER (한글)"
+                                  value={editingProductForm.maker || ''}
+                                  onChange={(e) => setEditingProductForm({ ...editingProductForm, maker: e.target.value })}
+                                  className="px-3 py-2 rounded-xl bg-white border border-slate-300 font-semibold"
+                                />
+                                <input
+                                  type="text"
+                                  placeholder="MAKER (English)"
+                                  value={editingProductForm.makerEn || ''}
+                                  onChange={(e) => setEditingProductForm({ ...editingProductForm, makerEn: e.target.value })}
+                                  className="px-3 py-2 rounded-xl bg-white border border-slate-300"
+                                />
+                                <input
+                                  type="text"
+                                  placeholder="MAKER (中文)"
+                                  value={editingProductForm.makerCn || ''}
+                                  onChange={(e) => setEditingProductForm({ ...editingProductForm, makerCn: e.target.value })}
+                                  className="px-3 py-2 rounded-xl bg-white border border-slate-300"
+                                />
+                              </div>
+                            </div>
+
+                            {/* Category Selection */}
                             <div>
                               <label className="block font-bold text-slate-700 mb-1">카테고리</label>
                               <select
@@ -2919,46 +4034,26 @@ export const AdminDashboardModal: React.FC = () => {
                                 ))}
                               </select>
                             </div>
-
-                            <div>
-                              <label className="block font-bold text-slate-700 mb-1">제품명 (English)</label>
-                              <input
-                                type="text"
-                                value={editingProductForm.titleEn || ''}
-                                onChange={(e) => setEditingProductForm({ ...editingProductForm, titleEn: e.target.value })}
-                                className="w-full px-3 py-2 rounded-xl bg-white border border-slate-300 font-mono"
-                              />
-                            </div>
-                            <div>
-                              <label className="block font-bold text-slate-700 mb-1">제품명 (中文)</label>
-                              <input
-                                type="text"
-                                value={editingProductForm.titleCn || ''}
-                                onChange={(e) => setEditingProductForm({ ...editingProductForm, titleCn: e.target.value })}
-                                className="w-full px-3 py-2 rounded-xl bg-white border border-slate-300"
-                              />
-                            </div>
-
-                            <div className="sm:col-span-2">
-                              <label className="block font-bold text-slate-700 mb-1">제품 설명 (KO)</label>
-                              <input
-                                type="text"
-                                value={editingProductForm.description || ''}
-                                onChange={(e) => setEditingProductForm({ ...editingProductForm, description: e.target.value })}
-                                className="w-full px-3 py-2 rounded-xl bg-white border border-slate-300"
-                              />
-                            </div>
                           </div>
 
                           {/* Image URL & Upload */}
                           <div className="p-3 bg-white rounded-xl border border-slate-200 space-y-2 text-xs">
-                            <label className="block font-semibold text-slate-700">제품 이미지</label>
+                            <div className="flex items-center justify-between">
+                              <label className="block font-semibold text-slate-700">제품 이미지</label>
+                              <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200 flex items-center gap-1">
+                                <ShieldCheck className="w-3 h-3 text-emerald-600" />
+                                <span>워터마크 자동 합성</span>
+                              </span>
+                            </div>
                             <div className="flex items-center gap-3">
-                              <img
-                                src={editingProductForm.imageUrl}
-                                alt="preview"
-                                className="w-12 h-12 object-contain bg-slate-50 border rounded-lg shrink-0"
-                              />
+                              <div className="relative w-12 h-12 rounded-lg border border-slate-200 overflow-hidden bg-white flex items-center justify-center p-0.5 shrink-0">
+                                <img
+                                  src={editingProductForm.imageUrl}
+                                  alt="preview"
+                                  className="w-full h-full object-contain"
+                                />
+                                <ProductWatermarkOverlay opacity={0.35} size="sm" />
+                              </div>
                               <label className="px-3 py-1.5 rounded-lg bg-purple-100 hover:bg-purple-200 text-purple-900 font-bold text-[11px] cursor-pointer border border-purple-300 flex items-center gap-1 shrink-0">
                                 <Upload className="w-3.5 h-3.5 text-purple-700" />
                                 <span>이미지 교체</span>
@@ -2968,9 +4063,13 @@ export const AdminDashboardModal: React.FC = () => {
                                   className="hidden"
                                   onChange={(e) => {
                                     if (e.target.files?.[0]) {
-                                      handleFileUpload(e.target.files[0], (dataUrl) => {
-                                        setEditingProductForm({ ...editingProductForm, imageUrl: dataUrl });
-                                      });
+                                      handleFileUpload(
+                                        e.target.files[0],
+                                        (dataUrl) => {
+                                          setEditingProductForm({ ...editingProductForm, imageUrl: dataUrl });
+                                        },
+                                        { watermark: true }
+                                      );
                                     }
                                   }}
                                 />
@@ -2989,6 +4088,7 @@ export const AdminDashboardModal: React.FC = () => {
                             <button
                               type="button"
                               onClick={() => {
+                                setNewProdPN('');
                                 setEditingProductId(null);
                                 setEditingProductForm(null);
                               }}
@@ -3005,19 +4105,23 @@ export const AdminDashboardModal: React.FC = () => {
                                 }
 
                                 let updatedProd = { ...editingProductForm };
-                                // Auto-translate if English or Chinese title missing
+                                const effectivePN = updatedProd.pn || updatedProd.pl || '';
+                                const effectivePNEn = updatedProd.pnEn || updatedProd.plEn || effectivePN;
+                                const effectivePNCn = updatedProd.pnCn || updatedProd.plCn || effectivePN;
+
+                                updatedProd.pn = effectivePN;
+                                updatedProd.pnEn = effectivePNEn;
+                                updatedProd.pnCn = effectivePNCn;
+                                updatedProd.pl = effectivePN;
+                                updatedProd.plEn = effectivePNEn;
+                                updatedProd.plCn = effectivePNCn;
+
                                 if (!updatedProd.titleEn || !updatedProd.titleCn) {
                                   setIsTranslating(true);
                                   try {
                                     const titleTrans = await autoTranslateText(updatedProd.title, 'Precision CNC machined part title');
-                                    const descTrans = updatedProd.description
-                                      ? await autoTranslateText(updatedProd.description, 'Precision CNC machined part description')
-                                      : { english: '', chinese: '' };
-
                                     updatedProd.titleEn = updatedProd.titleEn || titleTrans.english;
                                     updatedProd.titleCn = updatedProd.titleCn || titleTrans.chinese;
-                                    updatedProd.descriptionEn = updatedProd.descriptionEn || descTrans.english;
-                                    updatedProd.descriptionCn = updatedProd.descriptionCn || descTrans.chinese;
                                   } catch (err) {
                                     console.error(err);
                                   } finally {
@@ -3026,7 +4130,7 @@ export const AdminDashboardModal: React.FC = () => {
                                 }
 
                                 updateProduct(updatedProd.id, updatedProd);
-                                alert('제품 정보가 성공적으로 수정되었습니다 (영문/중문 반영 완료).');
+                                alert('제품 정보가 성공적으로 수정되었습니다.');
                                 setEditingProductId(null);
                                 setEditingProductForm(null);
                               }}
@@ -3042,28 +4146,46 @@ export const AdminDashboardModal: React.FC = () => {
 
                     const categoryName =
                       productCategories.find((c) => c.id === prod.category)?.name || prod.category;
+                    const prodPN = prod.pn || prod.pl;
 
                     return (
                       <div key={prod.id} className="p-4 bg-white rounded-2xl border border-slate-200 flex items-center justify-between gap-3 hover:border-purple-300 transition-colors shadow-sm">
-                        <div className="flex items-center gap-3">
-                          <img
-                            src={prod.imageUrl}
-                            alt={prod.title}
-                            className="w-14 h-14 object-contain bg-slate-50 p-1 rounded-xl border shrink-0"
-                            referrerPolicy="no-referrer"
-                          />
-                          <div>
-                            <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-3 min-w-0">
+                          <div className="relative w-14 h-14 bg-white p-1 rounded-xl border border-slate-200 shrink-0 overflow-hidden flex items-center justify-center">
+                            <img
+                              src={prod.imageUrl}
+                              alt={prod.title}
+                              className="w-full h-full object-contain"
+                              referrerPolicy="no-referrer"
+                            />
+                            <ProductWatermarkOverlay opacity={0.35} size="sm" />
+                          </div>
+                          <div className="min-w-0">
+                            <div className="flex items-center gap-2 flex-wrap">
                               <h5 className="font-bold text-slate-900 text-xs">{prod.title}</h5>
                               <span className="text-[10px] px-2 py-0.5 rounded-full bg-purple-50 text-purple-700 font-bold border border-purple-200">
                                 {categoryName}
                               </span>
                             </div>
-                            {prod.description && (
-                              <p className="text-[11px] text-slate-600 mt-0.5 line-clamp-1">{prod.description}</p>
-                            )}
+
+                            {/* P/N & MAKER info */}
+                            <div className="flex items-center gap-3 mt-1 text-[11px] flex-wrap">
+                              {prodPN && (
+                                <span className="text-slate-600 flex items-center gap-1">
+                                  <strong className="text-slate-500 font-bold font-mono text-[10px]">P/N: </strong>
+                                  <span className="font-pn font-bold text-emerald-800 bg-emerald-50 border border-emerald-200/80 px-2 py-0.5 rounded-md text-xs">{prodPN}</span>
+                                </span>
+                              )}
+                              {prod.maker && (
+                                <span className="text-slate-600">
+                                  <strong className="text-slate-400 font-medium">MAKER: </strong>
+                                  <span className="font-semibold text-slate-700 bg-slate-100 px-1.5 py-0.5 rounded border border-slate-200">{prod.maker}</span>
+                                </span>
+                              )}
+                            </div>
+
                             {(prod.titleEn || prod.titleCn) && (
-                              <span className="text-[10px] text-slate-400 block truncate max-w-xs mt-0.5 font-mono">
+                              <span className="text-[10px] text-slate-400 block truncate max-w-sm mt-1 font-mono">
                                 EN: {prod.titleEn || '-'} | CN: {prod.titleCn || '-'}
                               </span>
                             )}
@@ -3082,18 +4204,42 @@ export const AdminDashboardModal: React.FC = () => {
                             <Edit3 className="w-3.5 h-3.5" />
                             <span>수정</span>
                           </button>
-                          <button
-                            type="button"
-                            onClick={() => {
-                              if (window.confirm(`'${prod.title}' 제품을 삭제하시겠습니까?`)) {
-                                deleteProduct(prod.id);
-                              }
-                            }}
-                            className="p-1.5 rounded-xl bg-red-50 text-red-600 hover:bg-red-100 border border-red-200 transition-colors cursor-pointer"
-                            title="제품 삭제"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </button>
+                          {deleteConfirmProdId === prod.id ? (
+                            <div className="flex items-center gap-1">
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  deleteProduct(prod.id);
+                                  setDeleteConfirmProdId(null);
+                                  showToast(`'${prod.title}' 제품이 삭제되었습니다.`);
+                                }}
+                                className="px-2.5 py-1.5 rounded-xl bg-red-600 hover:bg-red-700 text-white font-bold text-xs flex items-center gap-1 shadow-sm transition-colors cursor-pointer animate-pulse"
+                                title="삭제 확정"
+                              >
+                                <Trash2 className="w-3.5 h-3.5" />
+                                <span>삭제 확인</span>
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => setDeleteConfirmProdId(null)}
+                                className="px-2 py-1.5 rounded-xl bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold text-xs cursor-pointer"
+                              >
+                                취소
+                              </button>
+                            </div>
+                          ) : (
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setDeleteConfirmProdId(prod.id);
+                              }}
+                              className="px-2.5 py-1.5 rounded-xl bg-red-50 hover:bg-red-100 text-red-600 border border-red-200 font-bold text-xs flex items-center gap-1 transition-colors cursor-pointer"
+                              title="제품 삭제"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                              <span>삭제</span>
+                            </button>
+                          )}
                         </div>
                       </div>
                     );

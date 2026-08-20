@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { CMSProvider, useCMS } from './context/CMSContext';
 import { LanguageProvider } from './context/LanguageContext';
 import { Header } from './components/Header';
@@ -15,6 +15,10 @@ import { AdminDashboardModal } from './components/admin/AdminDashboardModal';
 
 function MainContent() {
   const { activeNav } = useCMS();
+
+  useEffect(() => {
+    document.title = '(주)백송이엔지';
+  }, []);
 
   return (
     <main className="pt-20">

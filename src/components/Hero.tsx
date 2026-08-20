@@ -178,7 +178,7 @@ export const Hero: React.FC = () => {
             >
               {currentTitle}
               <span className="block mt-2 bg-gradient-to-r from-teal-300 via-[#2BB8A1] to-emerald-400 bg-clip-text text-transparent">
-                {language === 'EN' ? (companyInfo.engName || companyInfo.name) : companyInfo.name}
+                {language === 'EN' || language === 'CN' ? (companyInfo.engName || 'BAEKSONG ENG') : companyInfo.name}
               </span>
             </motion.h1>
           </AnimatePresence>

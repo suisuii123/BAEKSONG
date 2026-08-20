@@ -78,13 +78,13 @@ export const CompanyLogo: React.FC<CompanyLogoProps> = ({
   const companyNameByLang = {
     KO: '(주)백송이엔지',
     EN: 'BAEKSONG ENG',
-    CN: '白松工程技术',
+    CN: 'BAEKSONG ENG',
   };
 
   const subNameByLang = {
     KO: 'BAEKSONG ENG',
     EN: 'Baeksong Eng. Co.,Ltd',
-    CN: 'BAEKSONG ENG',
+    CN: 'Baeksong Eng. Co.,Ltd',
   };
 
   const mainTitle = companyNameByLang[language] || '(주)백송이엔지';

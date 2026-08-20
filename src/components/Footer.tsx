@@ -9,10 +9,11 @@ import {
   Mail,
   ArrowUp,
   Building,
+  Lock,
 } from 'lucide-react';
 
 export const Footer: React.FC = () => {
-  const { companyInfo, setActiveNav } = useCMS();
+  const { companyInfo, setActiveNav, setIsAdminOpen } = useCMS();
   const { t, language } = useLanguage();
 
   const scrollToTop = () => {
@@ -27,9 +28,9 @@ export const Footer: React.FC = () => {
   return (
     <footer className="bg-slate-900 border-t border-slate-800 relative text-xs text-slate-400 pt-16 pb-12">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-10 pb-12 border-b border-slate-800">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-8 lg:gap-10 pb-12 border-b border-slate-800">
           {/* Col 1: Brand */}
-          <div className="lg:col-span-5 space-y-4">
+          <div className="lg:col-span-4 space-y-4">
             <CompanyLogo textSize="lg" theme="dark" />
             <p className="text-slate-400 text-xs leading-relaxed max-w-md mt-3">
               {language === 'EN'
@@ -41,7 +42,7 @@ export const Footer: React.FC = () => {
           </div>
 
           {/* Col 2: Quick Links */}
-          <div className="lg:col-span-3 space-y-3">
+          <div className="lg:col-span-2 space-y-3">
             <h4 className="text-sm font-bold text-white uppercase tracking-wider">
               {language === 'EN' ? 'Quick Links' : language === 'CN' ? '快速导航' : '주요 바로가기'}
             </h4>
@@ -90,7 +91,7 @@ export const Footer: React.FC = () => {
           </div>
 
           {/* Col 3: Contact Info Details */}
-          <div className="lg:col-span-4 space-y-3">
+          <div className="md:col-span-2 lg:col-span-6 space-y-3">
             <h4 className="text-sm font-bold text-white uppercase tracking-wider">
               {language === 'EN' ? 'Contact & Business Info' : language === 'CN' ? '总部联系方式及营业信息' : '본사 연락처 및 사업자 정보'}
             </h4>
@@ -113,33 +114,33 @@ export const Footer: React.FC = () => {
               </div>
 
               {/* Addresses */}
-              <div className="space-y-1 pt-0.5">
+              <div className="space-y-1.5 pt-0.5">
                 <div className="flex items-start gap-2">
                   <MapPin className="w-3.5 h-3.5 text-emerald-400 shrink-0 mt-0.5" />
-                  <div>
-                    <span className="text-slate-400 font-medium">
+                  <div className="flex-1 text-slate-300">
+                    <span className="text-slate-400 font-medium whitespace-nowrap">
                       {language === 'EN' ? 'Plant 1 Address' : language === 'CN' ? '第一工厂地址' : '주소 (제1공장)'} :
                     </span>{' '}
                     <span>
                       {language === 'EN'
-                        ? (companyInfo.addressEn || companyInfo.address)
+                        ? (companyInfo.addressEn || companyInfo.address).replace(/\s*\(Plant 1\)$/, '')
                         : language === 'CN'
-                        ? (companyInfo.addressCn || companyInfo.address)
+                        ? (companyInfo.addressCn || companyInfo.address).replace(/\s*\(第一工厂\)$/, '')
                         : companyInfo.address}
                     </span>
                   </div>
                 </div>
                 {companyInfo.address2 && (
                   <div className="flex items-start gap-2 pl-5">
-                    <div>
-                      <span className="text-slate-400 font-medium">
+                    <div className="flex-1 text-slate-300">
+                      <span className="text-slate-400 font-medium whitespace-nowrap">
                         {language === 'EN' ? 'Plant 2 Address' : language === 'CN' ? '第二工厂地址' : '주소 (제2공장)'} :
                       </span>{' '}
                       <span>
                         {language === 'EN'
-                          ? (companyInfo.address2En || companyInfo.address2)
+                          ? (companyInfo.address2En || companyInfo.address2).replace(/\s*\(Plant 2\)$/, '')
                           : language === 'CN'
-                          ? (companyInfo.address2Cn || companyInfo.address2)
+                          ? (companyInfo.address2Cn || companyInfo.address2).replace(/\s*\(第二工厂\)$/, '')
                           : companyInfo.address2}
                       </span>
                     </div>
@@ -177,14 +178,24 @@ export const Footer: React.FC = () => {
 
         {/* Bottom Bar */}
         <div className="pt-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-[11px] text-slate-500">
-          <div>
-            Copyright © {new Date().getFullYear()} {language === 'EN' ? (companyInfo.engName || companyInfo.name) : companyInfo.name}. All Rights Reserved.
+          <div className="flex flex-wrap items-center gap-x-4 gap-y-1">
+            <span>
+              Copyright © {new Date().getFullYear()} {language === 'EN' || language === 'CN' ? (companyInfo.engName || 'BAEKSONG ENG') : companyInfo.name}. All Rights Reserved.
+            </span>
+            <button
+              onClick={() => setIsAdminOpen(true)}
+              className="text-slate-600 hover:text-slate-400 transition-colors flex items-center gap-1 cursor-pointer font-mono"
+              title="관리자 CMS (/admin)"
+            >
+              <Lock className="w-2.5 h-2.5" />
+              <span>Admin</span>
+            </button>
           </div>
 
           <div className="flex items-center gap-4">
             <button
               onClick={scrollToTop}
-              className="p-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 transition-all flex items-center gap-1 font-semibold"
+              className="p-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 transition-all flex items-center gap-1 font-semibold cursor-pointer"
             >
               <ArrowUp className="w-4 h-4 text-emerald-400" />
               <span>TOP</span>

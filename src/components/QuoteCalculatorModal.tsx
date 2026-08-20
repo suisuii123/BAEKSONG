@@ -262,7 +262,7 @@ export const QuoteCalculatorModal: React.FC = () => {
               ) : (
                 <>
                   <Send className="w-4 h-4" />
-                  <span>{t.quoteModal.submitBtn} ({companyInfo.email})</span>
+                  <span>{t.quoteModal.submitBtn}</span>
                 </>
               )}
             </button>

@@ -7,6 +7,12 @@ import {
   X,
 } from 'lucide-react';
 import { Equipment } from '../types';
+import { initialEquipments } from '../data/initialData';
+
+const defaultEqFallbackMap: Record<string, string> = {};
+initialEquipments.forEach((e) => {
+  if (e.imageUrl) defaultEqFallbackMap[e.id] = e.imageUrl;
+});
 
 export const EquipmentSection: React.FC = () => {
   const { equipments } = useCMS();
@@ -79,10 +85,16 @@ export const EquipmentSection: React.FC = () => {
                     title={language === 'EN' ? 'Click to view full image' : language === 'CN' ? '点击放大查看原图' : '클릭하여 원본 이미지 크게 보기'}
                   >
                     <img
-                      src={eq.imageUrl}
+                      src={eq.imageUrl || defaultEqFallbackMap[eq.id] || ''}
                       alt={name}
                       className="w-full h-full object-contain group-hover/img:scale-105 transition-transform duration-500 drop-shadow-sm"
                       referrerPolicy="no-referrer"
+                      onError={(e) => {
+                        const fallback = defaultEqFallbackMap[eq.id];
+                        if (fallback && e.currentTarget.src !== fallback) {
+                          e.currentTarget.src = fallback;
+                        }
+                      }}
                     />
 
                     {/* Quantity Badge */}
