@@ -37,11 +37,19 @@ async function startServer() {
 
   // API route to get persistent CMS data
   app.get("/api/cms-data", (req, res) => {
+    res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+    res.setHeader('Pragma', 'no-cache');
+    res.setHeader('Expires', '0');
+    res.setHeader('Surrogate-Control', 'no-store');
     try {
       if (fs.existsSync(CMS_STORAGE_FILE)) {
         const raw = fs.readFileSync(CMS_STORAGE_FILE, "utf-8");
         const parsed = JSON.parse(raw);
-        return res.json({ success: true, data: parsed });
+        return res.json({
+          success: true,
+          data: parsed,
+          lastModified: fs.statSync(CMS_STORAGE_FILE).mtimeMs,
+        });
       }
       return res.json({ success: false, data: null });
     } catch (error: any) {
@@ -51,14 +59,49 @@ async function startServer() {
   });
 
   // API route to save persistent CMS data
+  const CMS_STORAGE_BACKUP_FILE = path.join(DATA_DIR, "cms_persistent_data.backup.json");
+
   app.post("/api/cms-data", (req, res) => {
     try {
       const { data } = req.body;
-      if (!data) {
+      if (!data || typeof data !== 'object') {
         return res.status(400).json({ success: false, error: "No data provided" });
       }
-      fs.writeFileSync(CMS_STORAGE_FILE, JSON.stringify(data, null, 2), "utf-8");
-      return res.json({ success: true, message: "CMS data saved permanently" });
+
+      // If existing storage exists, create a backup first
+      if (fs.existsSync(CMS_STORAGE_FILE)) {
+        try {
+          const currentDataRaw = fs.readFileSync(CMS_STORAGE_FILE, "utf-8");
+          // Ensure we don't accidentally overwrite good data with empty shell
+          const currentData = JSON.parse(currentDataRaw);
+          if (currentData && typeof currentData === 'object') {
+            fs.writeFileSync(CMS_STORAGE_BACKUP_FILE, currentDataRaw, "utf-8");
+
+            // Smart merge protection: If incoming data lacks factoryPhotos or products but existing has them, preserve
+            if ((!data.factoryPhotos || data.factoryPhotos.length === 0) && currentData.factoryPhotos?.length > 0) {
+              data.factoryPhotos = currentData.factoryPhotos;
+            }
+            if ((!data.products || data.products.length === 0) && currentData.products?.length > 0) {
+              data.products = currentData.products;
+            }
+            if ((!data.heroSlides || data.heroSlides.length === 0) && currentData.heroSlides?.length > 0) {
+              data.heroSlides = currentData.heroSlides;
+            }
+          }
+        } catch (backupErr) {
+          console.warn("CMS backup creation warning:", backupErr);
+        }
+      }
+
+      const tempFile = `${CMS_STORAGE_FILE}.tmp`;
+      fs.writeFileSync(tempFile, JSON.stringify(data, null, 2), "utf-8");
+      fs.renameSync(tempFile, CMS_STORAGE_FILE);
+
+      return res.json({
+        success: true,
+        message: "CMS data saved permanently and safely",
+        savedAt: Date.now(),
+      });
     } catch (error: any) {
       console.error("Error writing CMS storage file:", error);
       return res.status(500).json({ success: false, error: error?.message });

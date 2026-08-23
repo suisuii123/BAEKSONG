@@ -1,0 +1,18 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Company website CMS data, factory photos, products, settings
+    match /cms_content/{docId} {
+      allow read, write: if true;
+    }
+    
+    // Customer inquiries
+    match /inquiries/{inquiryId} {
+      allow read, write: if true;
+    }
+
+    match /{document=**} {
+      allow read, write: if true;
+    }
+  }
+}

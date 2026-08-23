@@ -23,7 +23,7 @@ export const FactoryGallerySlider: React.FC = () => {
   const [touchEnd, setTouchEnd] = useState<number | null>(null);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
 
-  const allPhotos = factoryPhotos && factoryPhotos.length > 0 ? factoryPhotos : initialFactoryPhotos;
+  const allPhotos = (factoryPhotos && factoryPhotos.length > 0 ? factoryPhotos : initialFactoryPhotos) || [];
   
   const plant1Count = allPhotos.filter((p) => (p.factoryType || 'factory1') === 'factory1').length;
   const plant2Count = allPhotos.filter((p) => p.factoryType === 'factory2').length;

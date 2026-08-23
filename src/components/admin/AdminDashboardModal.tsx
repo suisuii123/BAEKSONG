@@ -6,7 +6,7 @@ import { autoTranslateText } from '../../utils/translator';
 import { submitToFormspree, DEFAULT_FORMSPREE_ENDPOINT } from '../../utils/formspree';
 import { drawWatermarkOnCanvas, applyWatermarkToImage } from '../../utils/watermark';
 import { ProductWatermarkOverlay } from '../ProductWatermarkOverlay';
-import factoryImg from '../../assets/images/baeksong_real_exterior_1786692106395.jpg';
+import { uploadImageToStorage } from '../../services/firebaseStorage';
 import {
   X,
   Settings,
@@ -106,23 +106,25 @@ export const AdminDashboardModal: React.FC = () => {
   >('hero');
 
 
-  // File Upload Helper with optional automatic Watermark application and HTML5 Canvas compression
+  // File Upload Helper with optional automatic Watermark application, HTML5 Canvas compression, and Firebase Cloud Storage upload
   const handleFileUpload = (
     file: File,
-    callback: (dataUrl: string) => void,
-    options?: { watermark?: boolean }
+    callback: (finalUrl: string) => void,
+    options?: { watermark?: boolean; folder?: string }
   ) => {
     if (!file) return;
+    showToast('사진 처리 및 구글 클라우드 스토리지 업로드 중...');
+
     const reader = new FileReader();
     reader.onload = (e) => {
       if (e.target?.result && typeof e.target.result === 'string') {
         const rawDataUrl = e.target.result;
         const img = new Image();
-        img.onload = () => {
+        img.onload = async () => {
           try {
             const canvas = document.createElement('canvas');
-            const MAX_WIDTH = 950;
-            const MAX_HEIGHT = 950;
+            const MAX_WIDTH = 1200;
+            const MAX_HEIGHT = 1200;
             let width = img.width;
             let height = img.height;
 
@@ -142,6 +144,7 @@ export const AdminDashboardModal: React.FC = () => {
             canvas.height = height;
 
             const ctx = canvas.getContext('2d');
+            let processedDataUrl = rawDataUrl;
             if (ctx) {
               ctx.drawImage(img, 0, 0, width, height);
 
@@ -150,12 +153,29 @@ export const AdminDashboardModal: React.FC = () => {
                 drawWatermarkOnCanvas(ctx, width, height, { opacity: 0.38, scale: 0.46 });
               }
 
-              const compressedDataUrl = canvas.toDataURL('image/jpeg', 0.82);
-              callback(compressedDataUrl);
+              processedDataUrl = canvas.toDataURL('image/jpeg', 0.85);
+            }
+
+            // Determine destination folder
+            const folder = options?.folder || (activeTab === 'factory' ? 'factory_photos' : activeTab === 'products' ? 'products' : 'cms_uploads');
+
+            // Attempt upload directly to Firebase Cloud Storage
+            const uploadResult = await uploadImageToStorage(processedDataUrl, folder);
+
+            if (uploadResult.isCloudStorage && uploadResult.url) {
+              callback(uploadResult.url);
+              showToast('구글 클라우드 스토리지(pro-axis-wdw25)에 영구 업로드 완료되었습니다.');
             } else {
-              callback(rawDataUrl);
+              // Fallback to data URL
+              callback(processedDataUrl);
+              if (uploadResult.error && (uploadResult.error.toLowerCase().includes('permission') || uploadResult.error.toLowerCase().includes('unauthorized') || uploadResult.error.includes('403'))) {
+                showToast('Firebase Storage 규칙을 allow read, write: if true; 로 설정해주세요. (현재 로컬/Firestore 저장됨)');
+              } else {
+                showToast('사진이 안전하게 등록되었습니다.');
+              }
             }
           } catch (err) {
+            console.error('Image processing or upload error:', err);
             callback(rawDataUrl);
           }
         };
@@ -682,12 +702,16 @@ export const AdminDashboardModal: React.FC = () => {
             <div>
               <h2 className="text-lg sm:text-xl font-bold text-slate-900 flex items-center gap-2 flex-wrap">
                 <span>(주)백송이엔지 CMS 통합 관리자 대시보드</span>
+                <span className="px-2 py-0.5 rounded bg-emerald-100 border border-emerald-300 text-emerald-800 text-[10px] font-mono font-bold flex items-center gap-1.5 shadow-xs">
+                  <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                  <span>FIREBASE CLOUD DB & STORAGE (pro-axis-wdw25) 연동</span>
+                </span>
                 <span className="px-2 py-0.5 rounded bg-purple-100 text-purple-800 text-[10px] font-mono font-bold">
                   MULTI-LANG LIVE CMS
                 </span>
               </h2>
               <p className="text-xs text-slate-500">
-                회사소개, 조직도, 설비현황, 제품안내, 오시는길, 견적요청, 외국어(KO/EN/CN) 텍스트 및 이미지를 통합 편집합니다.
+                구글 클라우드 DB(Firestore) 및 Cloud Storage와 실시간 연동되어 서버 재부팅 시에도 업로드한 공장 사진 및 제품 정보가 영구 보존됩니다.
               </p>
             </div>
           </div>
@@ -2038,23 +2062,44 @@ export const AdminDashboardModal: React.FC = () => {
                                       <Edit3 className="w-3.5 h-3.5" />
                                       <span>수정</span>
                                     </button>
-                                    <button
-                                      type="button"
-                                      onClick={() => {
-                                        if (factoryPhotos.length <= 1) {
-                                          showToast('⚠️ 최소 1개 이상의 현장 사진이 유지되어야 합니다.');
-                                          return;
-                                        }
-                                        if (window.confirm(`'${photo.titleKo}' 사진을 삭제하시겠습니까?`)) {
-                                          deleteFactoryPhoto(photo.id);
-                                          showToast('공장 현장 사진이 삭제되었습니다.');
-                                        }
-                                      }}
-                                      className="px-3 py-1.5 rounded-lg bg-red-50 hover:bg-red-100 border border-red-200 text-red-600 font-bold flex items-center gap-1 text-xs transition-colors cursor-pointer"
-                                    >
-                                      <Trash2 className="w-3.5 h-3.5" />
-                                      <span>삭제</span>
-                                    </button>
+                                    {deleteConfirmPhotoId === photo.id ? (
+                                      <div className="flex items-center gap-1.5">
+                                        <button
+                                          type="button"
+                                          onClick={() => {
+                                            deleteFactoryPhoto(photo.id);
+                                            setDeleteConfirmPhotoId(null);
+                                            showToast('공장 현장 사진이 삭제되었습니다.');
+                                          }}
+                                          className="px-3 py-1.5 rounded-lg bg-red-600 hover:bg-red-700 text-white font-bold flex items-center gap-1 text-xs shadow-sm transition-colors cursor-pointer"
+                                        >
+                                          <Trash2 className="w-3.5 h-3.5" />
+                                          <span>삭제 확인</span>
+                                        </button>
+                                        <button
+                                          type="button"
+                                          onClick={() => setDeleteConfirmPhotoId(null)}
+                                          className="px-2.5 py-1.5 rounded-lg bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold text-xs cursor-pointer"
+                                        >
+                                          취소
+                                        </button>
+                                      </div>
+                                    ) : (
+                                      <button
+                                        type="button"
+                                        onClick={() => {
+                                          if (factoryPhotos.length <= 1) {
+                                            showToast('⚠️ 최소 1개 이상의 현장 사진이 유지되어야 합니다.');
+                                            return;
+                                          }
+                                          setDeleteConfirmPhotoId(photo.id);
+                                        }}
+                                        className="px-3 py-1.5 rounded-lg bg-red-50 hover:bg-red-100 border border-red-200 text-red-600 font-bold flex items-center gap-1 text-xs transition-colors cursor-pointer"
+                                      >
+                                        <Trash2 className="w-3.5 h-3.5" />
+                                        <span>삭제</span>
+                                      </button>
+                                    )}
                                   </div>
                                 </div>
                               </div>
@@ -2206,7 +2251,7 @@ export const AdminDashboardModal: React.FC = () => {
                     <div className="flex items-center gap-3">
                       <div className="w-24 h-20 rounded-xl overflow-hidden bg-slate-100 border border-slate-300 shrink-0 p-1 flex items-center justify-center relative">
                         <img
-                          src={companyInfo.factoryImage || factoryImg}
+                          src={companyInfo.factoryImage}
                           alt="Factory Facility"
                           className="w-full h-full object-cover rounded-lg"
                           referrerPolicy="no-referrer"

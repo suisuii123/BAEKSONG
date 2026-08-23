@@ -212,4 +212,6 @@ export interface FactoryPhotoItem {
   tagCn?: string;
 }
 
+export type CustomTranslations = Record<Language, Record<string, Record<string, string>>>;
+
 

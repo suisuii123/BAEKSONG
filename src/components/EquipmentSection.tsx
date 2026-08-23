@@ -10,8 +10,8 @@ import { Equipment } from '../types';
 import { initialEquipments } from '../data/initialData';
 
 const defaultEqFallbackMap: Record<string, string> = {};
-initialEquipments.forEach((e) => {
-  if (e.imageUrl) defaultEqFallbackMap[e.id] = e.imageUrl;
+(initialEquipments || []).forEach((e) => {
+  if (e && e.imageUrl) defaultEqFallbackMap[e.id] = e.imageUrl;
 });
 
 export const EquipmentSection: React.FC = () => {

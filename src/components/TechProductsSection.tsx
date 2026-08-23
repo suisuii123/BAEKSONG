@@ -6,8 +6,8 @@ import { initialProducts } from '../data/initialData';
 import { ProductWatermarkOverlay } from './ProductWatermarkOverlay';
 
 const defaultFallbackMap: Record<string, string> = {};
-initialProducts.forEach((p) => {
-  if (p.imageUrl) defaultFallbackMap[p.id] = p.imageUrl;
+(initialProducts || []).forEach((p) => {
+  if (p && p.imageUrl) defaultFallbackMap[p.id] = p.imageUrl;
 });
 
 export const TechProductsSection: React.FC = () => {

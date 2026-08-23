@@ -8,7 +8,6 @@ import {
   Calendar,
   TrendingUp,
 } from 'lucide-react';
-import factoryImg from '../assets/images/baeksong_real_exterior_1786692106395.jpg';
 
 export const AboutSection: React.FC = () => {
   const { companyInfo, historyItems } = useCMS();
@@ -84,7 +83,7 @@ export const AboutSection: React.FC = () => {
           {/* Right Image Feature */}
           <div className="lg:col-span-5 relative rounded-3xl overflow-hidden border border-slate-200/90 shadow-2xl group min-h-[420px] bg-slate-900 ring-1 ring-slate-900/5 transition-all duration-500">
             <img
-              src={companyInfo.factoryImage || factoryImg}
+              src={companyInfo.factoryImage}
               alt="Baeksong Facility Building"
               className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 filter contrast-105"
               referrerPolicy="no-referrer"

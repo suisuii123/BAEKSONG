@@ -103,7 +103,7 @@ export const OrgChartSection: React.FC = () => {
 
           {/* Level 3: Four Core Operating Departments Grid */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mt-2">
-            {departments.map((dept) => {
+            {(departments || []).map((dept) => {
               const Icon = getDeptIcon(dept.iconName);
               const displayName = language === 'EN' ? dept.engName : language === 'CN' && dept.cnName ? dept.cnName : dept.name;
               const currentDuties =
@@ -111,7 +111,7 @@ export const OrgChartSection: React.FC = () => {
                   ? dept.dutiesEn
                   : language === 'CN' && dept.dutiesCn && dept.dutiesCn.length > 0
                   ? dept.dutiesCn
-                  : dept.duties;
+                  : (dept.duties || []);
 
               return (
                 <div
@@ -130,7 +130,7 @@ export const OrgChartSection: React.FC = () => {
                     </div>
 
                     <div className="space-y-2.5 pt-3 border-t border-slate-100">
-                      {currentDuties.map((duty, idx) => (
+                      {(currentDuties || []).map((duty, idx) => (
                         <div key={idx} className="flex items-start gap-2 text-xs text-slate-600">
                           <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0 mt-0.5" />
                           <span className="leading-tight">{duty}</span>
