@@ -148,6 +148,18 @@ const initialFactoryPhotoImageMap = new Map((initialFactoryPhotos || []).map((p)
 const initialProductMap = new Map((initialProducts || []).map((p) => [p.id, p]));
 const initialDepartmentMap = new Map((initialDepartments || []).map((d) => [d.id, d]));
 
+function sanitizeProductCategories(cats: ProductCategory[]): ProductCategory[] {
+  if (!Array.isArray(cats) || cats.length === 0) return initialProductCategories;
+  // If stored categories are old obsolete mock names ("Shower Head", "Heater Block", "Precision Jig", etc.), replace with modern categories
+  const hasObsoleteMock = cats.some(
+    (c) => c.name === 'Shower Head' || c.name === 'Heater Block' || c.name === 'Precision Jig' || c.name === 'Chamber Parts'
+  );
+  if (hasObsoleteMock) {
+    return initialProductCategories;
+  }
+  return cats;
+}
+
 function sanitizeDepartments(depts: Department[]): Department[] {
   if (!Array.isArray(depts)) return initialDepartments;
   return depts.map((d) => {
@@ -211,7 +223,7 @@ function sanitizeProducts(prods: Product[]): Product[] {
         updated.makerEn = defaultProd.makerEn;
         updated.makerCn = defaultProd.makerCn;
       }
-      if (!updated.imageUrl && defaultProd.imageUrl) {
+      if ((!updated.imageUrl || updated.imageUrl.includes('unsplash')) && defaultProd.imageUrl) {
         updated.imageUrl = defaultProd.imageUrl;
       }
     }
@@ -223,7 +235,7 @@ function sanitizeEquipments(eqs: Equipment[]): Equipment[] {
   if (!Array.isArray(eqs) || eqs.length === 0) return initialEquipments;
   return eqs.map((e) => {
     const defaultImg = initialEquipmentImageMap.get(e.id);
-    if (!e.imageUrl && defaultImg) {
+    if ((!e.imageUrl || e.imageUrl.includes('unsplash')) && defaultImg) {
       return { ...e, imageUrl: defaultImg };
     }
     return e;
@@ -234,7 +246,7 @@ function sanitizeHeroSlides(slides: HeroSlide[]): HeroSlide[] {
   if (!Array.isArray(slides) || slides.length === 0) return initialHeroSlides;
   return slides.map((s) => {
     const defaultImg = initialHeroSlideImageMap.get(s.id);
-    if (!s.imageUrl && defaultImg) {
+    if ((!s.imageUrl || s.imageUrl.includes('unsplash')) && defaultImg) {
       return { ...s, imageUrl: defaultImg };
     }
     return s;
@@ -242,10 +254,14 @@ function sanitizeHeroSlides(slides: HeroSlide[]): HeroSlide[] {
 }
 
 function sanitizeFactoryPhotos(photos: FactoryPhotoItem[]): FactoryPhotoItem[] {
-  if (!Array.isArray(photos)) return initialFactoryPhotos;
+  if (!Array.isArray(photos) || photos.length === 0) return initialFactoryPhotos;
   return photos.map((p, idx) => {
+    const defaultPhoto = (initialFactoryPhotos || [])[idx];
     let updated: FactoryPhotoItem = { ...p };
     
+    if ((!updated.image || updated.image.includes('unsplash')) && defaultPhoto?.image) {
+      updated.image = defaultPhoto.image;
+    }
     if (!updated.factoryType) {
       updated.factoryType = idx < 4 ? 'factory1' : 'factory2';
     }
@@ -258,7 +274,7 @@ function sanitizeCompanyInfo(info: CompanyInfo): CompanyInfo {
   return {
     ...initialCompanyInfo,
     ...info,
-    factoryImage: info.factoryImage || initialCompanyInfo.factoryImage,
+    factoryImage: (!info.factoryImage || info.factoryImage.includes('unsplash')) ? initialCompanyInfo.factoryImage : info.factoryImage,
     formspreeUrl: info.formspreeUrl || 'https://formspree.io/f/xgawngpn',
   };
 }
@@ -298,7 +314,7 @@ export const CMSProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   );
 
   const [productCategories, setProductCategories] = useState<ProductCategory[]>(() =>
-    getStoredItem('product_categories', initialProductCategories)
+    sanitizeProductCategories(getStoredItem('product_categories', initialProductCategories))
   );
 
   const [products, setProducts] = useState<Product[]>(() =>
