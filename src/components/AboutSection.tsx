@@ -7,6 +7,7 @@ import {
   Building2,
   Calendar,
   TrendingUp,
+  Factory,
 } from 'lucide-react';
 
 export const AboutSection: React.FC = () => {
@@ -81,13 +82,20 @@ export const AboutSection: React.FC = () => {
           </div>
 
           {/* Right Image Feature */}
-          <div className="lg:col-span-5 relative rounded-3xl overflow-hidden border border-slate-200/90 shadow-2xl group min-h-[420px] bg-slate-900 ring-1 ring-slate-900/5 transition-all duration-500">
-            <img
-              src={companyInfo.factoryImage}
-              alt="Baeksong Facility Building"
-              className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 filter contrast-105"
-              referrerPolicy="no-referrer"
-            />
+          <div className="lg:col-span-5 relative rounded-3xl overflow-hidden border border-slate-200/90 shadow-2xl group min-h-[420px] bg-slate-900 ring-1 ring-slate-900/5 transition-all duration-500 flex items-center justify-center">
+            {companyInfo.factoryImage ? (
+              <img
+                src={companyInfo.factoryImage}
+                alt="Baeksong Facility Building"
+                className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 filter contrast-105"
+                referrerPolicy="no-referrer"
+              />
+            ) : (
+              <div className="flex flex-col items-center justify-center text-slate-500 gap-2 p-8 text-center">
+                <Factory className="w-16 h-16 text-slate-600 stroke-1" />
+                <span className="text-xs text-slate-400 font-medium font-mono">회사 전경 사진 등록 필요</span>
+              </div>
+            )}
             <div className="absolute inset-0 bg-gradient-to-t from-slate-950/40 via-transparent to-slate-950/10 pointer-events-none group-hover:opacity-60 transition-opacity duration-500" />
             <div className="absolute bottom-4 left-4 z-10 px-3.5 py-1.5 rounded-xl bg-slate-900/85 backdrop-blur-md border border-slate-700 text-white text-xs font-bold font-mono shadow-lg">
               {language === 'EN' ? 'BAEKSONG ENG Headquarters / Plant' : language === 'CN' ? 'BAEKSONG ENG 总部/工厂全景' : '(주)백송이엔지 본사 / 공장 전경'}

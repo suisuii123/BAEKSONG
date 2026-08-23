@@ -223,7 +223,8 @@ function sanitizeProducts(prods: Product[]): Product[] {
         updated.makerEn = defaultProd.makerEn;
         updated.makerCn = defaultProd.makerCn;
       }
-      if ((!updated.imageUrl || updated.imageUrl.includes('unsplash')) && defaultProd.imageUrl) {
+      // Strictly retain user uploaded image; only use default if image was completely empty
+      if (!updated.imageUrl && defaultProd.imageUrl) {
         updated.imageUrl = defaultProd.imageUrl;
       }
     }
@@ -235,7 +236,7 @@ function sanitizeEquipments(eqs: Equipment[]): Equipment[] {
   if (!Array.isArray(eqs) || eqs.length === 0) return initialEquipments;
   return eqs.map((e) => {
     const defaultImg = initialEquipmentImageMap.get(e.id);
-    if ((!e.imageUrl || e.imageUrl.includes('unsplash')) && defaultImg) {
+    if (!e.imageUrl && defaultImg) {
       return { ...e, imageUrl: defaultImg };
     }
     return e;
@@ -246,7 +247,7 @@ function sanitizeHeroSlides(slides: HeroSlide[]): HeroSlide[] {
   if (!Array.isArray(slides) || slides.length === 0) return initialHeroSlides;
   return slides.map((s) => {
     const defaultImg = initialHeroSlideImageMap.get(s.id);
-    if ((!s.imageUrl || s.imageUrl.includes('unsplash')) && defaultImg) {
+    if (!s.imageUrl && defaultImg) {
       return { ...s, imageUrl: defaultImg };
     }
     return s;
@@ -259,7 +260,7 @@ function sanitizeFactoryPhotos(photos: FactoryPhotoItem[]): FactoryPhotoItem[] {
     const defaultPhoto = (initialFactoryPhotos || [])[idx];
     let updated: FactoryPhotoItem = { ...p };
     
-    if ((!updated.image || updated.image.includes('unsplash')) && defaultPhoto?.image) {
+    if (!updated.image && defaultPhoto?.image) {
       updated.image = defaultPhoto.image;
     }
     if (!updated.factoryType) {
@@ -274,7 +275,7 @@ function sanitizeCompanyInfo(info: CompanyInfo): CompanyInfo {
   return {
     ...initialCompanyInfo,
     ...info,
-    factoryImage: (!info.factoryImage || info.factoryImage.includes('unsplash')) ? initialCompanyInfo.factoryImage : info.factoryImage,
+    factoryImage: info.factoryImage || initialCompanyInfo.factoryImage || '',
     formspreeUrl: info.formspreeUrl || 'https://formspree.io/f/xgawngpn',
   };
 }

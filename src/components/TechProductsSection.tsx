@@ -339,18 +339,19 @@ export const TechProductsSection: React.FC = () => {
                       </div>
                     )}
 
-                    <img
-                      src={prod.imageUrl || defaultFallbackMap[prod.id] || ''}
-                      alt={title}
-                      className="w-full h-full object-contain mix-blend-multiply group-hover:scale-105 transition-transform duration-500 relative z-0"
-                      referrerPolicy="no-referrer"
-                      onError={(e) => {
-                        const fallback = defaultFallbackMap[prod.id];
-                        if (fallback && e.currentTarget.src !== fallback) {
-                          e.currentTarget.src = fallback;
-                        }
-                      }}
-                    />
+                    {prod.imageUrl ? (
+                      <img
+                        src={prod.imageUrl}
+                        alt={title}
+                        className="w-full h-full object-contain mix-blend-multiply group-hover:scale-105 transition-transform duration-500 relative z-0"
+                        referrerPolicy="no-referrer"
+                      />
+                    ) : (
+                      <div className="flex flex-col items-center justify-center text-slate-300 gap-2">
+                        <Layers className="w-12 h-12 stroke-1 text-slate-300" />
+                        <span className="text-xs text-slate-400 font-medium">사용자 이미지 업로드 필요</span>
+                      </div>
+                    )}
 
                     {/* Official BAEKSONG ENG Corporate Watermark Overlay */}
                     <ProductWatermarkOverlay opacity={0.38} size="md" />

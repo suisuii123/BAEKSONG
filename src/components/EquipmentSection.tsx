@@ -84,18 +84,19 @@ export const EquipmentSection: React.FC = () => {
                     className="relative h-56 bg-slate-50 border-b border-slate-100/80 overflow-hidden flex items-center justify-center p-3 cursor-pointer group/img"
                     title={language === 'EN' ? 'Click to view full image' : language === 'CN' ? '点击放大查看原图' : '클릭하여 원본 이미지 크게 보기'}
                   >
-                    <img
-                      src={eq.imageUrl || defaultEqFallbackMap[eq.id] || ''}
-                      alt={name}
-                      className="w-full h-full object-contain group-hover/img:scale-105 transition-transform duration-500 drop-shadow-sm"
-                      referrerPolicy="no-referrer"
-                      onError={(e) => {
-                        const fallback = defaultEqFallbackMap[eq.id];
-                        if (fallback && e.currentTarget.src !== fallback) {
-                          e.currentTarget.src = fallback;
-                        }
-                      }}
-                    />
+                    {eq.imageUrl ? (
+                      <img
+                        src={eq.imageUrl}
+                        alt={name}
+                        className="w-full h-full object-contain group-hover/img:scale-105 transition-transform duration-500 drop-shadow-sm"
+                        referrerPolicy="no-referrer"
+                      />
+                    ) : (
+                      <div className="flex flex-col items-center justify-center text-slate-300 gap-1">
+                        <Cpu className="w-10 h-10 text-slate-300 stroke-1" />
+                        <span className="text-[11px] text-slate-400 font-medium">설비 사진 업로드 필요</span>
+                      </div>
+                    )}
 
                     {/* Quantity Badge */}
                     <div className="absolute top-3 right-3 z-10">

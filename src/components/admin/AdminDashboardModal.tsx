@@ -3192,9 +3192,7 @@ export const AdminDashboardModal: React.FC = () => {
                       precision: '±0.001 mm',
                       quantity: newEqQty,
                       category: newEqCat,
-                      imageUrl:
-                        newEqImageUrl ||
-                        'https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&w=800&q=80',
+                      imageUrl: newEqImageUrl.trim() || '',
                     });
                     alert('설비가 등록되었으며 영문 및 중문 번역이 자동 반영되었습니다.');
                     setNewEqName('');
@@ -3867,9 +3865,7 @@ export const AdminDashboardModal: React.FC = () => {
                       makerCn: makerCn.trim() || undefined,
                       category: newProdCat,
                       categoryName: selectedCategoryObj?.name || newProdCat.toUpperCase(),
-                      imageUrl:
-                        newProdImageUrl ||
-                        'https://images.unsplash.com/photo-1581092335397-9583fe92d232?auto=format&fit=crop&w=800&q=80',
+                      imageUrl: newProdImageUrl.trim() || '',
                       featured: true,
                     });
                     alert('제품이 등록되었으며 영문 및 중문 정보가 저장되었습니다.');

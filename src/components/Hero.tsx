@@ -22,14 +22,14 @@ export const Hero: React.FC = () => {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isPlaying, setIsPlaying] = useState(true);
 
-  // Fallback slides if heroSlides is empty
+  // Fallback slides if heroSlides is empty (strictly text only if no user image)
   const slides = heroSlides && heroSlides.length > 0 ? heroSlides : [
     {
       id: 'default-1',
       badge: t.hero.badge || '반도체 장비 메탈 부품 초정밀 가공 선도기업',
       title: t.hero.heading1 || '초정밀 가공의 한계를 넘어서는 기술력',
       subtitle: t.hero.subHeading || '반도체 장비 메탈 부품 초정밀 가공 전문 기업. 최첨단 설비와 엄격한 품질관리로 토탈 솔루션을 제공합니다.',
-      imageUrl: 'https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&w=2000&q=80',
+      imageUrl: '',
     }
   ];
 
@@ -113,14 +113,18 @@ export const Hero: React.FC = () => {
                 isActive ? 'opacity-100 z-10' : 'opacity-0 z-0 pointer-events-none'
               }`}
             >
-              <img
-                src={slide.imageUrl}
-                alt={slide.title}
-                className={`w-full h-full object-cover transform transition-transform duration-[7000ms] ease-out ${
-                  isActive ? 'scale-105' : 'scale-100'
-                } filter brightness-[0.92] contrast-[1.02]`}
-                referrerPolicy="no-referrer"
-              />
+              {slide.imageUrl ? (
+                <img
+                  src={slide.imageUrl}
+                  alt={slide.title}
+                  className={`w-full h-full object-cover transform transition-transform duration-[7000ms] ease-out ${
+                    isActive ? 'scale-105' : 'scale-100'
+                  } filter brightness-[0.92] contrast-[1.02]`}
+                  referrerPolicy="no-referrer"
+                />
+              ) : (
+                <div className="w-full h-full bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950" />
+              )}
             </div>
           );
         })}
