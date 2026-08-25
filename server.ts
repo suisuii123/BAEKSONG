@@ -121,6 +121,39 @@ async function startServer() {
     }
   });
 
+  // Explicit Search Engine Crawler Routes (robots.txt & sitemap.xml)
+  app.get("/robots.txt", (req, res) => {
+    const publicRobots = path.join(process.cwd(), "public", "robots.txt");
+    const distRobots = path.join(process.cwd(), "dist", "robots.txt");
+    const filePath = fs.existsSync(publicRobots) ? publicRobots : distRobots;
+
+    res.setHeader("Content-Type", "text/plain; charset=utf-8");
+    if (fs.existsSync(filePath)) {
+      return res.sendFile(filePath);
+    }
+    return res.send(`User-agent: *\nAllow: /\n\nHost: https://www.baeksongeng.com\nSitemap: https://www.baeksongeng.com/sitemap.xml\n`);
+  });
+
+  app.get("/sitemap.xml", (req, res) => {
+    const publicSitemap = path.join(process.cwd(), "public", "sitemap.xml");
+    const distSitemap = path.join(process.cwd(), "dist", "sitemap.xml");
+    const filePath = fs.existsSync(publicSitemap) ? publicSitemap : distSitemap;
+
+    res.setHeader("Content-Type", "application/xml; charset=utf-8");
+    if (fs.existsSync(filePath)) {
+      return res.sendFile(filePath);
+    }
+    return res.send(`<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <url>
+    <loc>https://www.baeksongeng.com/</loc>
+    <lastmod>2026-08-25</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>1.0</priority>
+  </url>
+</urlset>`);
+  });
+
   // API route for AI Translation using Gemini 3.6 Flash
   app.post("/api/translate", async (req, res) => {
     try {
