@@ -12,6 +12,7 @@ import { Footer } from './components/Footer';
 import { QuoteCalculatorModal } from './components/QuoteCalculatorModal';
 import { SEOPreviewModal } from './components/SEOPreviewModal';
 import { AdminDashboardModal } from './components/admin/AdminDashboardModal';
+import { DevCmsButton } from './components/DevCmsButton';
 
 function MainContent() {
   const { activeNav } = useCMS();
@@ -58,6 +59,9 @@ export default function App() {
           <QuoteCalculatorModal />
           <SEOPreviewModal />
           <AdminDashboardModal />
+
+          {/* AI Studio / Dev Only Floating CMS Quick Launch Button */}
+          <DevCmsButton />
         </div>
       </LanguageProvider>
     </CMSProvider>

@@ -1,145 +1,147 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { useCMS } from '../context/CMSContext';
-import { makeWhiteBackgroundTransparent } from '../utils/watermark';
 
-interface ProductWatermarkOverlayProps {
+export interface ProductWatermarkOverlayProps {
   opacity?: number;
   className?: string;
-  size?: 'sm' | 'md' | 'lg';
+  size?: 'sm' | 'md' | 'lg' | 'responsive';
 }
 
 /**
- * Clean Transparent Vector & Custom Image Watermark Overlay for (주)백송이엔지
- * - Zero square-box artifacts (no background rectangle).
- * - Full support for pure SVG vector, transparent custom PNG, or global toggle.
+ * ProductWatermarkOverlay
+ * Renders the official Baeksong ENG corporate watermark naturally over product images.
+ * Perfectly reproduces the look in sample 워터마크(테스트).png with zero square edge artifacts.
  */
 export const ProductWatermarkOverlay: React.FC<ProductWatermarkOverlayProps> = ({
   opacity,
   className = '',
-  size = 'md',
+  size = 'responsive',
 }) => {
   const { companyInfo } = useCMS();
-  const [processedImg, setProcessedImg] = useState<string | null>(null);
 
-  // If globally disabled or mode is 'off', do not render
-  if (companyInfo.enableWatermark === false || companyInfo.watermarkMode === 'off') {
+  // If explicitly disabled in CMS settings (and watermarkMode is off)
+  if (companyInfo.enableWatermark === false && companyInfo.watermarkMode === 'off') {
     return null;
   }
 
-  const finalOpacity = companyInfo.watermarkOpacity ?? (opacity ?? 0.35);
+  const finalOpacity = opacity ?? (companyInfo.watermarkOpacity || 0.42);
 
   const sizeClasses = {
-    sm: 'max-w-[130px]',
-    md: 'max-w-[190px] sm:max-w-[220px]',
-    lg: 'max-w-[280px]',
-  };
-
-  const mode = companyInfo.watermarkMode || (companyInfo.watermarkImage ? 'custom' : 'vector');
-
-  useEffect(() => {
-    let isMounted = true;
-    if (mode === 'custom' && companyInfo.watermarkImage) {
-      makeWhiteBackgroundTransparent(companyInfo.watermarkImage, companyInfo.watermarkBgRemovalLevel || 45)
-        .then((transparentPng) => {
-          if (isMounted) {
-            setProcessedImg(transparentPng);
-          }
-        })
-        .catch(() => {
-          if (isMounted) setProcessedImg(companyInfo.watermarkImage || null);
-        });
-    } else {
-      setProcessedImg(null);
-    }
-    return () => {
-      isMounted = false;
-    };
-  }, [mode, companyInfo.watermarkImage, companyInfo.watermarkBgRemovalLevel]);
-
-  const activeImage = processedImg || (mode === 'custom' ? companyInfo.watermarkImage : null);
+    sm: 'max-w-[140px] max-h-[110px]',
+    md: 'max-w-[200px] max-h-[160px]',
+    lg: 'max-w-[280px] max-h-[220px]',
+    responsive: 'w-[52%] max-w-[230px] min-w-[130px] aspect-[600/460]',
+  }[size];
 
   return (
     <div
-      className={`absolute inset-0 flex items-center justify-center pointer-events-none select-none z-10 p-4 transition-opacity duration-300 ${className}`}
-      aria-hidden="true"
+      className={`absolute inset-0 flex items-center justify-center pointer-events-none z-10 select-none overflow-hidden ${className}`}
+      style={{ opacity: finalOpacity }}
     >
-      {mode === 'custom' && activeImage ? (
-        <img
-          src={activeImage}
-          alt="Baeksong ENG Watermark"
-          className={`w-3/5 ${sizeClasses[size]} h-auto object-contain`}
-          style={{ opacity: finalOpacity }}
-          referrerPolicy="no-referrer"
-        />
-      ) : (
-        <svg
-          viewBox="0 0 500 380"
-          fill="none"
-          xmlns="http://www.w3.org/2000/svg"
-          className={`w-3/5 ${sizeClasses[size]} h-auto drop-shadow-[0_2px_8px_rgba(0,0,0,0.25)]`}
-          style={{ opacity: finalOpacity }}
-        >
-          {/* Circular Arrow Loop Frame - Transparent Outline */}
-          <circle
-            cx="250"
-            cy="100"
-            r="54"
+      <svg
+        viewBox="0 0 600 460"
+        fill="none"
+        xmlns="http://www.w3.org/2000/svg"
+        className={`${sizeClasses} object-contain drop-shadow-[0_1px_3px_rgba(0,0,0,0.12)]`}
+      >
+        <g>
+          {/* 1. Central Rounded Squircle Frame (Translucent grey background matching test sample) */}
+          <rect
+            x="220"
+            y="30"
+            width="160"
+            height="160"
+            rx="38"
+            fill="#94A3B8"
+            fillOpacity="0.4"
             stroke="#94A3B8"
-            strokeWidth="7"
+            strokeWidth="3.5"
+            strokeOpacity="0.6"
+          />
+
+          {/* 2. Circular Arrow Loop Frame around B */}
+          <circle
+            cx="300"
+            cy="110"
+            r="56"
+            stroke="#FFFFFF"
+            strokeWidth="6"
+            strokeLinecap="round"
             fill="none"
-            strokeDasharray="140 30"
-            strokeDashoffset="15"
+            strokeDasharray="145 35"
+            strokeDashoffset="18"
+            strokeOpacity="0.95"
           />
-          
-          {/* Arrowhead 1 (Top-Left of Circle) */}
-          <path d="M 218 52 L 230 46 L 227 58 Z" fill="#94A3B8" />
-          
-          {/* Arrowhead 2 (Bottom-Right of Circle) */}
-          <path d="M 282 148 L 270 154 L 273 142 Z" fill="#94A3B8" />
 
-          {/* Center Stylized 'B' Character - Clean Crisp Vector Fill */}
+          {/* Top-Left Arrow Head */}
+          <path d="M 264 58 L 278 52 L 274 66 Z" fill="#FFFFFF" fillOpacity="0.95" />
+
+          {/* Bottom-Right Arrow Head */}
+          <path d="M 336 162 L 322 168 L 326 154 Z" fill="#FFFFFF" fillOpacity="0.95" />
+
+          {/* Center Stylized 'B' Character */}
           <path
-            d="M 232 66 C 232 66 238 66 254 66 C 267 66 274 72 274 81 C 274 89 267 93 259 95 C 270 97 277 103 277 114 C 277 126 267 134 250 134 C 236 134 232 134 232 134 L 232 66 Z M 244 76 L 244 92 L 253 92 C 261 92 264 88 264 84 C 264 79 260 76 253 76 L 244 76 Z M 244 102 L 244 124 L 254 124 C 262 124 266 119 266 113 C 266 107 261 102 253 102 L 244 102 Z"
-            fill="#CBD5E1"
+            d="M 284 76 C 284 76 290 76 304 76 C 316 76 323 81 323 89 C 323 96 317 100 309 102 C 319 104 326 109 326 119 C 326 129 316 136 301 136 C 287 136 284 136 284 136 L 284 76 Z M 294 85 L 294 99 L 303 99 C 310 99 313 96 313 92 C 313 88 309 85 303 85 L 294 85 Z M 294 108 L 294 127 L 304 127 C 311 127 315 123 315 117 C 315 112 310 108 303 108 L 294 108 Z"
+            fill="#FFFFFF"
+            fillOpacity="0.98"
           />
-          {/* Sprout / Leaf Flourish accent on top-left of B */}
-          <path d="M 221 66 C 225 66 230 63 232 59 L 232 68 Z" fill="#34D399" />
 
-          {/* Brand Name: BAEKSONG ENG */}
+          {/* Leaf/Sprout Accent on Top of B */}
+          <path d="M 276 76 C 280 76 284 73 285 69 L 285 78 Z" fill="#10B981" />
+
+          {/* 3. Brand Name: BAEKSONG ENG */}
           <text
-            x="250"
-            y="218"
+            x="300"
+            y="242"
             textAnchor="middle"
-            fill="#E2E8F0"
-            fontFamily="'Montserrat', 'Pretendard', system-ui, -apple-system, sans-serif"
-            fontSize="34"
+            fill="#64748B"
+            fontFamily="system-ui, -apple-system, 'Montserrat', 'Pretendard', sans-serif"
+            fontSize="38"
             fontWeight="900"
-            letterSpacing="5"
+            letterSpacing="6"
           >
             BAEKSONG ENG
           </text>
 
-          {/* Subtitle Decorative Line Left */}
-          <line x1="70" y1="248" x2="140" y2="248" stroke="#94A3B8" strokeWidth="2" strokeLinecap="round" />
+          {/* 4. Subtitle Decorative Line Left */}
+          <line
+            x1="80"
+            y1="274"
+            x2="175"
+            y2="274"
+            stroke="#94A3B8"
+            strokeWidth="2.5"
+            strokeLinecap="round"
+            strokeOpacity="0.8"
+          />
 
-          {/* Subtitle Slogan */}
+          {/* 5. Subtitle Slogan: — PRECISION · QUALITY · TRUST — */}
           <text
-            x="250"
-            y="253"
+            x="300"
+            y="279"
             textAnchor="middle"
-            fill="#94A3B8"
-            fontFamily="'Montserrat', 'Pretendard', system-ui, -apple-system, sans-serif"
-            fontSize="13.5"
+            fill="#64748B"
+            fontFamily="system-ui, -apple-system, 'Montserrat', 'Pretendard', sans-serif"
+            fontSize="14.5"
             fontWeight="800"
-            letterSpacing="5"
+            letterSpacing="6"
           >
             PRECISION · QUALITY · TRUST
           </text>
 
-          {/* Subtitle Decorative Line Right */}
-          <line x1="360" y1="248" x2="430" y2="248" stroke="#94A3B8" strokeWidth="2" strokeLinecap="round" />
-        </svg>
-      )}
+          {/* 6. Subtitle Decorative Line Right */}
+          <line
+            x1="425"
+            y1="274"
+            x2="520"
+            y2="274"
+            stroke="#94A3B8"
+            strokeWidth="2.5"
+            strokeLinecap="round"
+            strokeOpacity="0.8"
+          />
+        </g>
+      </svg>
     </div>
   );
 };

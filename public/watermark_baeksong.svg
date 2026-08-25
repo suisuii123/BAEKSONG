@@ -1,51 +1,100 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 500 380" fill="none">
-  <!-- Emblem Rounded Badge Container -->
-  <rect x="180" y="30" width="140" height="140" rx="36" fill="#8896A6" />
-  
-  <!-- Circular Arrow Loop Frame -->
-  <circle cx="250" cy="100" r="54" stroke="white" stroke-width="8" fill="none" stroke-dasharray="140 30" stroke-dashoffset="15" />
-  
-  <!-- Arrowhead 1 (Top-Left of Circle) -->
-  <path d="M 218 52 L 230 46 L 227 58 Z" fill="white" />
-  
-  <!-- Arrowhead 2 (Bottom-Right of Circle) -->
-  <path d="M 282 148 L 270 154 L 273 142 Z" fill="white" />
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 460" fill="none">
+  <!-- (주)백송이엔지 공식 투명 워터마크 (Zero Rectangle Artifacts, 100% Alpha Transparent) -->
+  <g>
+    <!-- 1. Central Rounded Squircle Frame (Translucent grey background matching test sample) -->
+    <rect
+      x="220"
+      y="30"
+      width="160"
+      height="160"
+      rx="38"
+      fill="#94A3B8"
+      fill-opacity="0.4"
+      stroke="#94A3B8"
+      stroke-width="3.5"
+      stroke-opacity="0.6"
+    />
 
-  <!-- Center Stylized 'B' Character -->
-  <path
-    d="M 232 66 C 232 66 238 66 254 66 C 267 66 274 72 274 81 C 274 89 267 93 259 95 C 270 97 277 103 277 114 C 277 126 267 134 250 134 C 236 134 232 134 232 134 L 232 66 Z M 244 76 L 244 92 L 253 92 C 261 92 264 88 264 84 C 264 79 260 76 253 76 L 244 76 Z M 244 102 L 244 124 L 254 124 C 262 124 266 119 266 113 C 266 107 261 102 253 102 L 244 102 Z"
-    fill="white"
-  />
-  <!-- Sprout / Leaf Flourish accent on top-left of B -->
-  <path d="M 221 66 C 225 66 230 63 232 59 L 232 68 Z" fill="white" />
+    <!-- 2. Circular Arrow Loop Frame around B in White -->
+    <circle
+      cx="300"
+      cy="110"
+      r="56"
+      stroke="#FFFFFF"
+      stroke-width="6"
+      stroke-linecap="round"
+      fill="none"
+      stroke-dasharray="145 35"
+      stroke-dashoffset="18"
+      stroke-opacity="0.95"
+    />
 
-  <!-- Brand Name: BAEKSONG ENG -->
-  <text
-    x="250"
-    y="218"
-    text-anchor="middle"
-    fill="#5A6A7D"
-    font-family="'Montserrat', 'Pretendard', system-ui, -apple-system, sans-serif"
-    font-size="34"
-    font-weight="900"
-    letter-spacing="5"
-  >BAEKSONG ENG</text>
+    <!-- Top-Left Arrow Head -->
+    <path d="M 264 58 L 278 52 L 274 66 Z" fill="#FFFFFF" fill-opacity="0.95" />
 
-  <!-- Subtitle Decorative Line Left -->
-  <line x1="70" y1="248" x2="140" y2="248" stroke="#8896A6" stroke-width="2.5" stroke-linecap="round" />
-  
-  <!-- Subtitle Slogan -->
-  <text
-    x="250"
-    y="253"
-    text-anchor="middle"
-    fill="#768597"
-    font-family="'Montserrat', 'Pretendard', system-ui, -apple-system, sans-serif"
-    font-size="13.5"
-    font-weight="800"
-    letter-spacing="5"
-  >PRECISION · QUALITY · TRUST</text>
+    <!-- Bottom-Right Arrow Head -->
+    <path d="M 336 162 L 322 168 L 326 154 Z" fill="#FFFFFF" fill-opacity="0.95" />
 
-  <!-- Subtitle Decorative Line Right -->
-  <line x1="360" y1="248" x2="430" y2="248" stroke="#8896A6" stroke-width="2.5" stroke-linecap="round" />
+    <!-- Center Stylized 'B' Character in White -->
+    <path
+      d="M 284 76 C 284 76 290 76 304 76 C 316 76 323 81 323 89 C 323 96 317 100 309 102 C 319 104 326 109 326 119 C 326 129 316 136 301 136 C 287 136 284 136 284 136 L 284 76 Z M 294 85 L 294 99 L 303 99 C 310 99 313 96 313 92 C 313 88 309 85 303 85 L 294 85 Z M 294 108 L 294 127 L 304 127 C 311 127 315 123 315 117 C 315 112 310 108 303 108 L 294 108 Z"
+      fill="#FFFFFF"
+      fill-opacity="0.98"
+    />
+
+    <!-- Leaf/Sprout Accent on Top of B -->
+    <path d="M 276 76 C 280 76 284 73 285 69 L 285 78 Z" fill="#10B981" />
+
+    <!-- 3. Brand Name: BAEKSONG ENG -->
+    <text
+      x="300"
+      y="242"
+      text-anchor="middle"
+      fill="#64748B"
+      font-family="system-ui, -apple-system, 'Montserrat', 'Pretendard', sans-serif"
+      fontSize="38"
+      font-weight="900"
+      letter-spacing="6"
+    >
+      BAEKSONG ENG
+    </text>
+
+    <!-- 4. Subtitle Decorative Line Left -->
+    <line
+      x1="80"
+      y1="274"
+      x2="175"
+      y2="274"
+      stroke="#94A3B8"
+      stroke-width="2.5"
+      stroke-linecap="round"
+      stroke-opacity="0.8"
+    />
+
+    <!-- 5. Subtitle Slogan: — PRECISION · QUALITY · TRUST — -->
+    <text
+      x="300"
+      y="279"
+      text-anchor="middle"
+      fill="#64748B"
+      font-family="system-ui, -apple-system, 'Montserrat', 'Pretendard', sans-serif"
+      fontSize="14.5"
+      font-weight="800"
+      letter-spacing="6"
+    >
+      PRECISION · QUALITY · TRUST
+    </text>
+
+    <!-- 6. Subtitle Decorative Line Right -->
+    <line
+      x1="425"
+      y1="274"
+      x2="520"
+      y2="274"
+      stroke="#94A3B8"
+      stroke-width="2.5"
+      stroke-linecap="round"
+      stroke-opacity="0.8"
+    />
+  </g>
 </svg>

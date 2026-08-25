@@ -340,21 +340,22 @@ export const TechProductsSection: React.FC = () => {
                     )}
 
                     {prod.imageUrl ? (
-                      <img
-                        src={prod.imageUrl}
-                        alt={title}
-                        className="w-full h-full object-contain mix-blend-multiply group-hover:scale-105 transition-transform duration-500 relative z-0"
-                        referrerPolicy="no-referrer"
-                      />
+                      <>
+                        <img
+                          src={prod.imageUrl}
+                          alt={title}
+                          className="w-full h-full object-contain group-hover:scale-105 transition-transform duration-500 relative z-0"
+                          referrerPolicy="no-referrer"
+                        />
+                        {/* Official BAEKSONG ENG Watermark Overlay */}
+                        <ProductWatermarkOverlay />
+                      </>
                     ) : (
                       <div className="flex flex-col items-center justify-center text-slate-300 gap-2">
                         <Layers className="w-12 h-12 stroke-1 text-slate-300" />
                         <span className="text-xs text-slate-400 font-medium">사용자 이미지 업로드 필요</span>
                       </div>
                     )}
-
-                    {/* Official / Custom BAEKSONG ENG Watermark Overlay */}
-                    {!prod.hideWatermark && <ProductWatermarkOverlay size="md" />}
                   </div>
 
                   {/* Card Content - Title, P/N, MAKER */}

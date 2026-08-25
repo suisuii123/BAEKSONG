@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useCMS } from '../context/CMSContext';
 import { useLanguage, Language } from '../context/LanguageContext';
 import { CompanyLogo } from './CompanyLogo';
+import { isDevOrStudioEnvironment } from '../utils/envCheck';
 import {
   Menu,
   X,
@@ -27,8 +28,10 @@ export const Header: React.FC = () => {
 
   const [scrolled, setScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [isDevMode, setIsDevMode] = useState(false);
 
   useEffect(() => {
+    setIsDevMode(isDevOrStudioEnvironment());
     const handleScroll = () => {
       setScrolled(window.scrollY > 20);
     };
@@ -128,17 +131,31 @@ export const Header: React.FC = () => {
             <button
               id="header-seo-btn"
               onClick={() => setIsSeoModalOpen(true)}
-              className="p-2.5 rounded-xl bg-slate-100 hover:bg-slate-200/80 text-slate-700 border border-slate-200 transition-all text-xs flex items-center gap-1.5"
+              className="p-2.5 rounded-xl bg-slate-100 hover:bg-slate-200/80 text-slate-700 border border-slate-200 transition-all text-xs flex items-center gap-1.5 cursor-pointer"
               title="SEO & 소셜 미디어 메타데이터"
             >
               <Share2 className="w-4 h-4 text-[#2BB8A1]" />
             </button>
 
+            {/* AI Studio Only: Quick CMS Header Button (Hidden on Live Production Domain) */}
+            {isDevMode && (
+              <button
+                id="header-studio-admin-btn"
+                type="button"
+                onClick={() => setIsAdminOpen(true)}
+                className="px-3 py-2.5 rounded-xl font-extrabold text-xs text-emerald-300 bg-slate-900 hover:bg-slate-800 border border-emerald-500/50 shadow-md flex items-center gap-1.5 transition-all hover:scale-105 active:scale-95 cursor-pointer"
+                title="AI Studio 전용 CMS 관리자 열기"
+              >
+                <Settings className="w-3.5 h-3.5 text-emerald-400 animate-spin" style={{ animationDuration: '10s' }} />
+                <span>CMS 관리자</span>
+              </button>
+            )}
+
             {/* Email Consultation Button */}
             <button
               id="header-quote-btn"
               onClick={() => setIsQuoteModalOpen(true)}
-              className="px-4 py-2.5 rounded-xl font-bold text-xs text-white transition-all duration-300 flex items-center gap-2 bg-[#2BB8A1] hover:bg-[#229E8A] shadow-md shadow-teal-900/20 hover:scale-105 active:scale-95"
+              className="px-4 py-2.5 rounded-xl font-bold text-xs text-white transition-all duration-300 flex items-center gap-2 bg-[#2BB8A1] hover:bg-[#229E8A] shadow-md shadow-teal-900/20 hover:scale-105 active:scale-95 cursor-pointer"
             >
               <Mail className="w-4 h-4" />
               <span>{t.header.requestQuote}</span>
@@ -197,13 +214,28 @@ export const Header: React.FC = () => {
             ))}
 
             <div className="pt-4 border-t border-slate-200 flex flex-col gap-2.5">
+              {isDevMode && (
+                <button
+                  id="mobile-studio-admin-btn"
+                  type="button"
+                  onClick={() => {
+                    setMobileMenuOpen(false);
+                    setIsAdminOpen(true);
+                  }}
+                  className="w-full py-3 rounded-xl font-bold text-sm text-emerald-300 bg-slate-900 border border-emerald-500/50 shadow flex items-center justify-center gap-2 cursor-pointer"
+                >
+                  <Settings className="w-4 h-4 text-emerald-400 animate-spin" style={{ animationDuration: '10s' }} />
+                  <span>⚡ AI Studio CMS 관리자 열기</span>
+                </button>
+              )}
+
               <button
                 id="mobile-quote-btn"
                 onClick={() => {
                   setMobileMenuOpen(false);
                   setIsQuoteModalOpen(true);
                 }}
-                className="w-full py-3 rounded-xl font-bold text-sm text-white flex items-center justify-center gap-2 bg-gradient-to-r from-emerald-600 to-teal-700 shadow-md shadow-emerald-500/20"
+                className="w-full py-3 rounded-xl font-bold text-sm text-white flex items-center justify-center gap-2 bg-gradient-to-r from-emerald-600 to-teal-700 shadow-md shadow-emerald-500/20 cursor-pointer"
               >
                 <Mail className="w-4 h-4" />
                 <span>{t.header.requestQuote}</span>

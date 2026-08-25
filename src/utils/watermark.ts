@@ -9,69 +9,75 @@
  */
 
 export const WATERMARK_SVG_STRING = `
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 500 380" fill="none" class="baeksong-watermark">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 480" fill="none" class="baeksong-watermark">
   <defs>
     <filter id="wmShadow" x="-20%" y="-20%" width="140%" height="140%">
-      <feDropShadow dx="0" dy="2" stdDeviation="3" flood-opacity="0.25" />
+      <feDropShadow dx="0" dy="2" stdDeviation="4" flood-opacity="0.3" />
     </filter>
   </defs>
 
-  <g filter="url(#wmShadow)" opacity="0.4">
-    <!-- Circular Arrow Loop Frame (NO background rectangle box) -->
-    <circle cx="250" cy="100" r="54" stroke="#94A3B8" stroke-width="7" fill="none" stroke-dasharray="140 30" stroke-dashoffset="15" />
-    <!-- Arrowhead 1 (Top-Left of Circle) -->
-    <path d="M 218 52 L 230 46 L 227 58 Z" fill="#94A3B8" />
-    <!-- Arrowhead 2 (Bottom-Right of Circle) -->
-    <path d="M 282 148 L 270 154 L 273 142 Z" fill="#94A3B8" />
+  <g filter="url(#wmShadow)" opacity="0.85">
+    <!-- 1. Central Rounded Squircle Frame (Matches official test watermark) -->
+    <rect x="210" y="30" width="180" height="180" rx="42" fill="#94A3B8" fill-opacity="0.22" stroke="#94A3B8" stroke-width="4.5" stroke-opacity="0.45" />
+
+    <!-- Circular Arrow Loop Frame around B -->
+    <circle cx="300" cy="120" r="58" stroke="#94A3B8" stroke-width="6.5" stroke-linecap="round" fill="none" stroke-dasharray="150 35" stroke-dashoffset="20" stroke-opacity="0.9" />
+    
+    <!-- Top-Left Arrow Head -->
+    <path d="M 262 66 L 278 60 L 273 75 Z" fill="#94A3B8" />
+    
+    <!-- Bottom-Right Arrow Head -->
+    <path d="M 338 174 L 322 180 L 327 165 Z" fill="#94A3B8" />
 
     <!-- Center Stylized 'B' Character -->
     <path
-      d="M 232 66 C 232 66 238 66 254 66 C 267 66 274 72 274 81 C 274 89 267 93 259 95 C 270 97 277 103 277 114 C 277 126 267 134 250 134 C 236 134 232 134 232 134 L 232 66 Z M 244 76 L 244 92 L 253 92 C 261 92 264 88 264 84 C 264 79 260 76 253 76 L 244 76 Z M 244 102 L 244 124 L 254 124 C 262 124 266 119 266 113 C 266 107 261 102 253 102 L 244 102 Z"
+      d="M 284 84 C 284 84 291 84 305 84 C 318 84 325 89 325 98 C 325 105 319 110 310 112 C 321 114 328 120 328 130 C 328 141 318 148 302 148 C 287 148 284 148 284 148 L 284 84 Z M 294 94 L 294 109 L 303 109 C 311 109 314 106 314 101 C 314 97 310 94 303 94 L 294 94 Z M 294 119 L 294 138 L 304 138 C 312 138 316 134 316 128 C 316 123 311 119 304 119 L 294 119 Z"
       fill="#CBD5E1"
     />
-    <!-- Sprout / Leaf Flourish accent on top-left of B -->
-    <path d="M 221 66 C 225 66 230 63 232 59 L 232 68 Z" fill="#10B981" />
 
-    <!-- Brand Name: BAEKSONG ENG -->
-    <text
-      x="250"
-      y="218"
-      text-anchor="middle"
-      fill="#CBD5E1"
-      font-family="'Montserrat', 'Pretendard', system-ui, -apple-system, sans-serif"
-      font-size="34"
-      font-weight="900"
-      letter-spacing="5"
-    >BAEKSONG ENG</text>
+    <!-- Leaf/Sprout Accent on Top-Left of B -->
+    <path d="M 276 84 C 280 84 285 81 286 77 L 286 86 Z" fill="#10B981" />
 
-    <!-- Subtitle Decorative Line Left -->
-    <line x1="70" y1="248" x2="140" y2="248" stroke="#94A3B8" stroke-width="2.5" stroke-linecap="round" />
-    
-    <!-- Subtitle Slogan -->
+    <!-- 2. Brand Name: BAEKSONG ENG -->
     <text
-      x="250"
-      y="253"
+      x="300"
+      y="262"
       text-anchor="middle"
       fill="#94A3B8"
-      font-family="'Montserrat', 'Pretendard', system-ui, -apple-system, sans-serif"
-      font-size="13.5"
+      font-family="system-ui, -apple-system, 'Montserrat', 'Pretendard', sans-serif"
+      font-size="38"
+      font-weight="900"
+      letter-spacing="6"
+    >BAEKSONG ENG</text>
+
+    <!-- 3. Subtitle Decorative Line Left -->
+    <line x1="75" y1="294" x2="170" y2="294" stroke="#94A3B8" stroke-width="2.5" stroke-linecap="round" stroke-opacity="0.85" />
+
+    <!-- 4. Subtitle Slogan: — PRECISION · QUALITY · TRUST — -->
+    <text
+      x="300"
+      y="300"
+      text-anchor="middle"
+      fill="#94A3B8"
+      font-family="system-ui, -apple-system, 'Montserrat', 'Pretendard', sans-serif"
+      font-size="14.5"
       font-weight="800"
-      letter-spacing="5"
+      letter-spacing="6"
     >PRECISION · QUALITY · TRUST</text>
 
-    <!-- Subtitle Decorative Line Right -->
-    <line x1="360" y1="248" x2="430" y2="248" stroke="#94A3B8" stroke-width="2.5" stroke-linecap="round" />
+    <!-- 5. Subtitle Decorative Line Right -->
+    <line x1="430" y1="294" x2="525" y2="294" stroke="#94A3B8" stroke-width="2.5" stroke-linecap="round" stroke-opacity="0.85" />
   </g>
 </svg>
 `;
 
 /**
  * Generates a crystal-clear, 100% transparent PNG Data URL of the official Baeksong ENG logo & text.
- * Contains ZERO background rectangle or artifacts.
+ * Strictly ZERO background rectangle, matching the exact test watermark layout.
  */
 export function generateOfficialTransparentWatermark(
-  width = 600,
-  height = 400
+  width = 1200,
+  height = 960
 ): string {
   const canvas = document.createElement('canvas');
   canvas.width = width;
@@ -82,69 +88,100 @@ export function generateOfficialTransparentWatermark(
   ctx.clearRect(0, 0, width, height);
 
   const cx = width / 2;
-  const cy = 110;
+  const cy = height * 0.28;
+  const scale = width / 600;
 
-  // 1. Circular Arrow Loop Frame
+  ctx.save();
+  ctx.translate(0, 0);
+
+  // 1. Central Rounded Squircle Frame (Soft translucent rounded box around B)
+  const sqW = 180 * scale;
+  const sqH = 180 * scale;
+  const sqX = cx - sqW / 2;
+  const sqY = cy - sqH / 2;
+  const radius = 42 * scale;
+
+  ctx.save();
+  ctx.beginPath();
+  ctx.moveTo(sqX + radius, sqY);
+  ctx.lineTo(sqX + sqW - radius, sqY);
+  ctx.quadraticCurveTo(sqX + sqW, sqY, sqX + sqW, sqY + radius);
+  ctx.lineTo(sqX + sqW, sqY + sqH - radius);
+  ctx.quadraticCurveTo(sqX + sqW, sqY + sqH, sqX + sqW - radius, sqY + sqH);
+  ctx.lineTo(sqX + radius, sqY + sqH);
+  ctx.quadraticCurveTo(sqX, sqY + sqH, sqX, sqY + sqH - radius);
+  ctx.lineTo(sqX, sqY + radius);
+  ctx.quadraticCurveTo(sqX, sqY, sqX + radius, sqY);
+  ctx.closePath();
+
+  ctx.fillStyle = 'rgba(148, 163, 184, 0.22)';
+  ctx.fill();
+  ctx.strokeStyle = 'rgba(148, 163, 184, 0.45)';
+  ctx.lineWidth = 4.5 * scale;
+  ctx.stroke();
+  ctx.restore();
+
+  // 2. Circular Arrow Loop Frame
   ctx.save();
   ctx.strokeStyle = '#94A3B8';
-  ctx.lineWidth = 7;
+  ctx.lineWidth = 6.5 * scale;
   ctx.lineCap = 'round';
   ctx.beginPath();
-  ctx.arc(cx, cy, 54, 0, Math.PI * 2);
+  ctx.arc(cx, cy, 58 * scale, 0.15 * Math.PI, 1.85 * Math.PI);
   ctx.stroke();
 
   // Arrowheads
   ctx.fillStyle = '#94A3B8';
   ctx.beginPath();
-  ctx.moveTo(cx - 32, cy - 48);
-  ctx.lineTo(cx - 20, cy - 54);
-  ctx.lineTo(cx - 23, cy - 42);
+  ctx.moveTo(cx - 36 * scale, cy - 48 * scale);
+  ctx.lineTo(cx - 20 * scale, cy - 56 * scale);
+  ctx.lineTo(cx - 24 * scale, cy - 40 * scale);
   ctx.closePath();
   ctx.fill();
 
   ctx.beginPath();
-  ctx.moveTo(cx + 32, cy + 48);
-  ctx.lineTo(cx + 20, cy + 54);
-  ctx.lineTo(cx + 23, cy + 42);
+  ctx.moveTo(cx + 36 * scale, cy + 48 * scale);
+  ctx.lineTo(cx + 20 * scale, cy + 56 * scale);
+  ctx.lineTo(cx + 24 * scale, cy + 40 * scale);
   ctx.closePath();
   ctx.fill();
 
-  // 2. Center 'B' Letter
-  ctx.fillStyle = '#E2E8F0';
-  ctx.font = '900 68px system-ui, -apple-system, "Pretendard", sans-serif';
+  // 3. Center 'B' Letter
+  ctx.fillStyle = '#CBD5E1';
+  ctx.font = `900 ${72 * scale}px system-ui, -apple-system, "Pretendard", "Montserrat", sans-serif`;
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
-  ctx.fillText('B', cx, cy + 2);
+  ctx.fillText('B', cx, cy + 4 * scale);
 
   // Sprout
   ctx.fillStyle = '#10B981';
   ctx.beginPath();
-  ctx.arc(cx - 20, cy - 26, 6, 0, Math.PI * 2);
+  ctx.arc(cx - 24 * scale, cy - 28 * scale, 7 * scale, 0, Math.PI * 2);
   ctx.fill();
 
-  // 3. Brand Name: BAEKSONG ENG
-  ctx.fillStyle = '#E2E8F0';
-  ctx.font = '900 36px system-ui, -apple-system, "Pretendard", "Montserrat", sans-serif';
+  // 4. Brand Name: BAEKSONG ENG
+  ctx.fillStyle = '#94A3B8';
+  ctx.font = `900 ${38 * scale}px system-ui, -apple-system, "Pretendard", "Montserrat", sans-serif`;
   ctx.textAlign = 'center';
   ctx.textBaseline = 'alphabetic';
-  ctx.letterSpacing = '6px';
-  ctx.fillText('BAEKSONG ENG', cx, 235);
+  ctx.letterSpacing = `${6 * scale}px`;
+  ctx.fillText('BAEKSONG ENG', cx, height * 0.58);
 
-  // 4. Decorative Subtitle Lines
+  // 5. Decorative Subtitle Lines
   ctx.strokeStyle = '#94A3B8';
-  ctx.lineWidth = 2.5;
+  ctx.lineWidth = 2.5 * scale;
   ctx.beginPath();
-  ctx.moveTo(cx - 210, 268);
-  ctx.lineTo(cx - 130, 268);
-  ctx.moveTo(cx + 130, 268);
-  ctx.lineTo(cx + 210, 268);
+  ctx.moveTo(cx - 225 * scale, height * 0.65);
+  ctx.lineTo(cx - 130 * scale, height * 0.65);
+  ctx.moveTo(cx + 130 * scale, height * 0.65);
+  ctx.lineTo(cx + 225 * scale, height * 0.65);
   ctx.stroke();
 
-  // 5. Subtitle Slogan
+  // 6. Subtitle Slogan
   ctx.fillStyle = '#94A3B8';
-  ctx.font = '800 14px system-ui, -apple-system, "Montserrat", sans-serif';
-  ctx.letterSpacing = '5px';
-  ctx.fillText('PRECISION · QUALITY · TRUST', cx, 273);
+  ctx.font = `800 ${14.5 * scale}px system-ui, -apple-system, "Montserrat", sans-serif`;
+  ctx.letterSpacing = `${6 * scale}px`;
+  ctx.fillText('PRECISION · QUALITY · TRUST', cx, height * 0.665);
 
   ctx.restore();
 
@@ -164,11 +201,11 @@ export function drawWatermarkOnCanvas(
     scale?: number;
   }
 ) {
-  const opacity = options?.opacity ?? 0.35;
-  const targetScale = options?.scale ?? 0.45;
+  const opacity = options?.opacity ?? 0.42;
+  const targetScale = options?.scale ?? 0.48;
 
-  const baseWmWidth = 500;
-  const baseWmHeight = 350;
+  const baseWmWidth = 600;
+  const baseWmHeight = 460;
   const wmRatio = baseWmWidth / baseWmHeight;
 
   let wmWidth = Math.min(width * targetScale, height * targetScale * wmRatio);
@@ -186,41 +223,84 @@ export function drawWatermarkOnCanvas(
 
   ctx.globalAlpha = opacity;
 
-  // 1. Circular Arrow Loop Frame (No square box)
-  ctx.strokeStyle = '#94A3B8';
-  ctx.lineWidth = 7;
+  // 1. Central Rounded Squircle Frame (Translucent grey background matching test sample)
+  const sqX = 220, sqY = 30, sqW = 160, sqH = 160, radius = 38;
   ctx.beginPath();
-  ctx.arc(250, 100, 54, 0, Math.PI * 2);
+  ctx.moveTo(sqX + radius, sqY);
+  ctx.lineTo(sqX + sqW - radius, sqY);
+  ctx.quadraticCurveTo(sqX + sqW, sqY, sqX + sqW, sqY + radius);
+  ctx.lineTo(sqX + sqW, sqY + sqH - radius);
+  ctx.quadraticCurveTo(sqX + sqW, sqY + sqH, sqX + sqW - radius, sqY + sqH);
+  ctx.lineTo(sqX + radius, sqY + sqH);
+  ctx.quadraticCurveTo(sqX, sqY + sqH, sqX, sqY + sqH - radius);
+  ctx.lineTo(sqX, sqY + radius);
+  ctx.quadraticCurveTo(sqX, sqY, sqX + radius, sqY);
+  ctx.closePath();
+  ctx.fillStyle = 'rgba(148, 163, 184, 0.4)';
+  ctx.fill();
+  ctx.strokeStyle = 'rgba(148, 163, 184, 0.6)';
+  ctx.lineWidth = 3.5;
   ctx.stroke();
 
-  // 2. Center 'B' glyph
-  ctx.fillStyle = '#CBD5E1';
-  ctx.font = '900 68px sans-serif';
+  // 2. Circular arrow loop in crisp white
+  ctx.strokeStyle = '#FFFFFF';
+  ctx.lineWidth = 6;
+  ctx.lineCap = 'round';
+  ctx.beginPath();
+  ctx.arc(300, 110, 56, 0.15 * Math.PI, 1.85 * Math.PI);
+  ctx.stroke();
+
+  // Top-Left & Bottom-Right Arrow Heads in white
+  ctx.fillStyle = '#FFFFFF';
+  ctx.beginPath();
+  ctx.moveTo(264, 58);
+  ctx.lineTo(278, 52);
+  ctx.lineTo(274, 66);
+  ctx.closePath();
+  ctx.fill();
+
+  ctx.beginPath();
+  ctx.moveTo(336, 162);
+  ctx.lineTo(322, 168);
+  ctx.lineTo(326, 154);
+  ctx.closePath();
+  ctx.fill();
+
+  // Center 'B' glyph in crisp white
+  ctx.fillStyle = '#FFFFFF';
+  ctx.font = '900 70px system-ui, -apple-system, sans-serif';
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
-  ctx.fillText('B', 250, 102);
+  ctx.fillText('B', 300, 112);
+
+  // Sprout leaf
+  ctx.fillStyle = '#10B981';
+  ctx.beginPath();
+  ctx.arc(280, 74, 6, 0, Math.PI * 2);
+  ctx.fill();
 
   // 3. Brand Name text: BAEKSONG ENG
-  ctx.fillStyle = '#CBD5E1';
-  ctx.font = '900 34px sans-serif';
+  ctx.fillStyle = '#64748B';
+  ctx.font = '900 38px system-ui, -apple-system, "Pretendard", "Montserrat", sans-serif';
   ctx.textAlign = 'center';
   ctx.textBaseline = 'alphabetic';
-  ctx.letterSpacing = '5px';
-  ctx.fillText('BAEKSONG ENG', 250, 218);
+  ctx.letterSpacing = '6px';
+  ctx.fillText('BAEKSONG ENG', 300, 242);
 
   // 4. Decorative Lines & Slogan
   ctx.strokeStyle = '#94A3B8';
   ctx.lineWidth = 2.5;
   ctx.beginPath();
-  ctx.moveTo(70, 248);
-  ctx.lineTo(140, 248);
-  ctx.moveTo(360, 248);
-  ctx.lineTo(430, 248);
+  ctx.moveTo(80, 274);
+  ctx.lineTo(175, 274);
+  ctx.moveTo(425, 274);
+  ctx.lineTo(520, 274);
   ctx.stroke();
 
-  ctx.fillStyle = '#94A3B8';
-  ctx.font = '800 13.5px sans-serif';
-  ctx.fillText('PRECISION · QUALITY · TRUST', 250, 253);
+  ctx.fillStyle = '#64748B';
+  ctx.font = '800 14.5px system-ui, -apple-system, "Pretendard", "Montserrat", sans-serif';
+  ctx.letterSpacing = '6px';
+  ctx.fillText('PRECISION · QUALITY · TRUST', 300, 279);
 
   ctx.restore();
 }
@@ -411,6 +491,22 @@ export function makeWhiteBackgroundTransparent(
       reader.onerror = () => resolve('');
       reader.readAsDataURL(dataUrlOrFile);
     }
+  });
+}
+
+/**
+ * Safe pass-through to ensure original product images remain 100% unaltered.
+ */
+export async function normalizeProductBackground(
+  source: string | File | Blob,
+  _targetMode: 'white' | 'transparent' = 'white'
+): Promise<string> {
+  if (typeof source === 'string') return source;
+  return new Promise((resolve) => {
+    const reader = new FileReader();
+    reader.onload = (e) => resolve((e.target?.result as string) || '');
+    reader.onerror = () => resolve('');
+    reader.readAsDataURL(source);
   });
 }
 

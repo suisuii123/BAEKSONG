@@ -407,22 +407,37 @@ export const CMSProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }
   };
 
-  // Sync route on popstate / hashchange (e.g. user manually navigates to /admin or presses back button)
+  // Sync route on popstate / hashchange / focus / periodic check (e.g. user manually types /admin in AI Studio address bar)
   useEffect(() => {
+    let lastUrl = typeof window !== 'undefined' ? window.location.href : '';
+
     const handleLocationChange = () => {
       const isAdmin = checkIsAdminRoute();
-      setIsAdminOpenState(isAdmin);
+      setIsAdminOpenState((prev) => (prev !== isAdmin ? isAdmin : prev));
     };
 
     window.addEventListener('popstate', handleLocationChange);
     window.addEventListener('hashchange', handleLocationChange);
+    window.addEventListener('focus', handleLocationChange);
+    window.addEventListener('visibilitychange', handleLocationChange);
 
     // Initial check
     handleLocationChange();
 
+    // Poller to detect URL changes inside iframe or AI Studio preview address bar
+    const intervalId = setInterval(() => {
+      if (typeof window !== 'undefined' && window.location.href !== lastUrl) {
+        lastUrl = window.location.href;
+        handleLocationChange();
+      }
+    }, 400);
+
     return () => {
       window.removeEventListener('popstate', handleLocationChange);
       window.removeEventListener('hashchange', handleLocationChange);
+      window.removeEventListener('focus', handleLocationChange);
+      window.removeEventListener('visibilitychange', handleLocationChange);
+      clearInterval(intervalId);
     };
   }, []);
 
