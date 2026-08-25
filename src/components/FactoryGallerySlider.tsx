@@ -194,17 +194,23 @@ export const FactoryGallerySlider: React.FC = () => {
           <div
             key={`bg-${currentPhoto.id}`}
             className="absolute inset-0 bg-cover bg-center filter blur-2xl opacity-30 scale-110 pointer-events-none transition-opacity duration-700"
-            style={{ backgroundImage: `url(${currentPhoto.image})` }}
+            style={{ backgroundImage: currentPhoto?.image ? `url(${currentPhoto.image})` : undefined }}
           />
 
           {/* Main Image in Full Uncropped View (100% Original Ratio & Composition) */}
-          <img
-            key={currentPhoto.id}
-            src={currentPhoto.image}
-            alt="공장 현장 사진"
-            className="relative z-10 w-full h-full max-h-[720px] object-contain transition-all duration-500 select-none p-1 sm:p-2"
-            referrerPolicy="no-referrer"
-          />
+          {currentPhoto?.image ? (
+            <img
+              key={currentPhoto.id}
+              src={currentPhoto.image}
+              alt="공장 현장 사진"
+              className="relative z-10 w-full h-full max-h-[720px] object-contain transition-all duration-500 select-none p-1 sm:p-2"
+              referrerPolicy="no-referrer"
+            />
+          ) : (
+            <div className="relative z-10 w-full h-full flex items-center justify-center text-slate-500 text-sm">
+              사진 등록 필요
+            </div>
+          )}
 
           {/* Top-Right Control Buttons (Zoom & Play/Pause) */}
           <div className="absolute top-4 right-4 z-20 flex items-center gap-2">
@@ -289,12 +295,18 @@ export const FactoryGallerySlider: React.FC = () => {
                       : 'border-slate-700/80 opacity-60 hover:opacity-100 hover:border-slate-500'
                   }`}
                 >
-                  <img
-                    src={item.image}
-                    alt={`현장 사진 ${idx + 1}`}
-                    className="w-full h-full object-cover"
-                    referrerPolicy="no-referrer"
-                  />
+                  {item.image ? (
+                    <img
+                      src={item.image}
+                      alt={`현장 사진 ${idx + 1}`}
+                      className="w-full h-full object-cover"
+                      referrerPolicy="no-referrer"
+                    />
+                  ) : (
+                    <div className="w-full h-full bg-slate-800 flex items-center justify-center text-[10px] text-slate-500">
+                      No Img
+                    </div>
+                  )}
                   {isActive && (
                     <div className="absolute inset-0 bg-[#2BB8A1]/20 pointer-events-none" />
                   )}
@@ -335,12 +347,16 @@ export const FactoryGallerySlider: React.FC = () => {
 
           {/* Lightbox Main Image Frame */}
           <div className="relative w-full max-w-6xl flex-1 flex items-center justify-center p-2 sm:p-6 overflow-hidden">
-            <img
-              src={currentPhoto.image}
-              alt="공장 현장 사진"
-              className="max-h-[85vh] w-auto max-w-full object-contain rounded-2xl shadow-2xl border border-slate-800 select-none animate-fade-in"
-              referrerPolicy="no-referrer"
-            />
+            {currentPhoto?.image ? (
+              <img
+                src={currentPhoto.image}
+                alt="공장 현장 사진"
+                className="max-h-[85vh] w-auto max-w-full object-contain rounded-2xl shadow-2xl border border-slate-800 select-none animate-fade-in"
+                referrerPolicy="no-referrer"
+              />
+            ) : (
+              <div className="text-slate-400 text-sm">사진 없음</div>
+            )}
 
             {/* Lightbox Left Navigation */}
             {total > 1 && (

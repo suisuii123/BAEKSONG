@@ -117,6 +117,12 @@ export const Hero: React.FC = () => {
                 <img
                   src={slide.imageUrl}
                   alt={slide.title}
+                  onError={(e) => {
+                    const fallback = `/hero/hero_slide_${(index % 3) + 1}.jpg`;
+                    if (e.currentTarget.src !== fallback) {
+                      e.currentTarget.src = fallback;
+                    }
+                  }}
                   className={`w-full h-full object-cover transform transition-transform duration-[7000ms] ease-out ${
                     isActive ? 'scale-105' : 'scale-100'
                   } filter brightness-[0.92] contrast-[1.02]`}

@@ -179,12 +179,19 @@ export const EquipmentSection: React.FC = () => {
 
                 {/* Modal Image View (No Cropping / As-Is) */}
                 <div className="p-6 bg-slate-50 flex items-center justify-center min-h-[350px] max-h-[75vh] overflow-auto">
-                  <img
-                    src={modalEquipment.imageUrl}
-                    alt={name}
-                    className="max-w-full max-h-[65vh] object-contain rounded-xl drop-shadow-md"
-                    referrerPolicy="no-referrer"
-                  />
+                  {modalEquipment.imageUrl ? (
+                    <img
+                      src={modalEquipment.imageUrl}
+                      alt={name}
+                      className="max-w-full max-h-[65vh] object-contain rounded-xl drop-shadow-md"
+                      referrerPolicy="no-referrer"
+                    />
+                  ) : (
+                    <div className="flex flex-col items-center justify-center text-slate-400 gap-2 p-8">
+                      <Cpu className="w-12 h-12 text-slate-400 stroke-1" />
+                      <span className="text-xs">사진이 등록되지 않았습니다</span>
+                    </div>
+                  )}
                 </div>
 
                 {/* Modal Footer */}

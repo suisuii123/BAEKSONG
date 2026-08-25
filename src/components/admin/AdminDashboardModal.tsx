@@ -1219,12 +1219,16 @@ export const AdminDashboardModal: React.FC = () => {
                                     </label>
                                   </div>
                                 </div>
-                                <div className="relative h-24 bg-slate-900 rounded-xl overflow-hidden border border-slate-300">
-                                  <img
-                                    src={inlineSlideForm.imageUrl}
-                                    alt="미리보기"
-                                    className="w-full h-full object-cover"
-                                  />
+                                <div className="relative h-24 bg-slate-900 rounded-xl overflow-hidden border border-slate-300 flex items-center justify-center">
+                                  {inlineSlideForm.imageUrl ? (
+                                    <img
+                                      src={inlineSlideForm.imageUrl}
+                                      alt="미리보기"
+                                      className="w-full h-full object-cover"
+                                    />
+                                  ) : (
+                                    <span className="text-[11px] text-slate-400 font-medium">사진 없음</span>
+                                  )}
                                 </div>
                               </div>
                             </div>
@@ -1364,12 +1368,22 @@ export const AdminDashboardModal: React.FC = () => {
                           /* DISPLAY CARD */
                           <div className="flex flex-col md:flex-row items-center gap-4 justify-between">
                             {/* Image Thumbnail */}
-                            <div className="w-full md:w-48 h-28 rounded-xl overflow-hidden bg-slate-900 shrink-0 border border-slate-200 relative group">
-                              <img
-                                src={slide.imageUrl}
-                                alt={slide.title}
-                                className="w-full h-full object-cover"
-                              />
+                            <div className="w-full md:w-48 h-28 rounded-xl overflow-hidden bg-slate-900 shrink-0 border border-slate-200 relative group flex items-center justify-center">
+                              {slide.imageUrl ? (
+                                <img
+                                  src={slide.imageUrl}
+                                  alt={slide.title}
+                                  onError={(e) => {
+                                    const fallback = `/hero/hero_slide_${(idx % 3) + 1}.jpg`;
+                                    if (e.currentTarget.src !== fallback) {
+                                      e.currentTarget.src = fallback;
+                                    }
+                                  }}
+                                  className="w-full h-full object-cover"
+                                />
+                              ) : (
+                                <span className="text-xs text-slate-500 font-medium">No Image</span>
+                              )}
                               <span className="absolute top-2 left-2 px-2 py-0.5 rounded bg-slate-900/80 text-teal-300 font-bold font-mono text-[10px]">
                                 Slide #{idx + 1}
                               </span>
@@ -1990,11 +2004,15 @@ export const AdminDashboardModal: React.FC = () => {
                                 </div>
 
                                 <div className="relative aspect-[16/10] rounded-xl overflow-hidden bg-slate-950 border border-slate-800 group flex items-center justify-center">
-                                  <img
-                                    src={photo.image}
-                                    alt={photo.titleKo}
-                                    className="w-full h-full object-contain group-hover:scale-105 transition-transform duration-500"
-                                  />
+                                  {photo.image ? (
+                                    <img
+                                      src={photo.image}
+                                      alt={photo.titleKo}
+                                      className="w-full h-full object-contain group-hover:scale-105 transition-transform duration-500"
+                                    />
+                                  ) : (
+                                    <span className="text-xs text-slate-500 font-medium">사진 없음</span>
+                                  )}
                                   <div className="absolute top-2 left-2 flex items-center gap-1.5">
                                     <span className="px-2 py-0.5 rounded-md bg-slate-900/80 backdrop-blur text-white text-[10px] font-mono font-bold">
                                       #{idx + 1}
@@ -2245,12 +2263,16 @@ export const AdminDashboardModal: React.FC = () => {
                     </label>
                     <div className="flex items-center gap-3">
                       <div className="w-24 h-20 rounded-xl overflow-hidden bg-slate-100 border border-slate-300 shrink-0 p-1 flex items-center justify-center relative">
-                        <img
-                          src={companyInfo.factoryImage}
-                          alt="Factory Facility"
-                          className="w-full h-full object-cover rounded-lg"
-                          referrerPolicy="no-referrer"
-                        />
+                        {companyInfo.factoryImage ? (
+                          <img
+                            src={companyInfo.factoryImage}
+                            alt="Factory Facility"
+                            className="w-full h-full object-cover rounded-lg"
+                            referrerPolicy="no-referrer"
+                          />
+                        ) : (
+                          <div className="text-[10px] text-slate-400 text-center font-bold">사진 미등록</div>
+                        )}
                       </div>
 
                       <div className="flex-1 space-y-2">
@@ -3335,11 +3357,17 @@ export const AdminDashboardModal: React.FC = () => {
 
                         {/* Image Change */}
                         <div className="p-3 bg-white rounded-xl border border-purple-200 flex items-center gap-3">
-                          <img
-                            src={editingEqData.imageUrl ?? eq.imageUrl}
-                            alt={eq.name}
-                            className="w-16 h-12 object-contain bg-slate-50 border rounded-lg shrink-0"
-                          />
+                          {(editingEqData.imageUrl || eq.imageUrl) ? (
+                            <img
+                              src={editingEqData.imageUrl || eq.imageUrl}
+                              alt={eq.name}
+                              className="w-16 h-12 object-contain bg-slate-50 border rounded-lg shrink-0"
+                            />
+                          ) : (
+                            <div className="w-16 h-12 bg-slate-100 border rounded-lg shrink-0 flex items-center justify-center text-[9px] text-slate-400">
+                              No Img
+                            </div>
+                          )}
                           <label className="px-3 py-1.5 bg-purple-100 hover:bg-purple-200 text-purple-900 font-bold text-xs rounded-xl cursor-pointer">
                             <span>사진 파일 변경</span>
                             <input
@@ -3385,12 +3413,18 @@ export const AdminDashboardModal: React.FC = () => {
                   return (
                     <div key={eq.id} className="p-4 bg-white rounded-2xl border border-slate-200 flex items-center justify-between gap-3">
                       <div className="flex items-center gap-3">
-                        <img
-                          src={eq.imageUrl}
-                          alt={eq.name}
-                          className="w-16 h-14 object-contain bg-slate-50 p-1 rounded-xl border shrink-0"
-                          referrerPolicy="no-referrer"
-                        />
+                        {eq.imageUrl ? (
+                          <img
+                            src={eq.imageUrl}
+                            alt={eq.name}
+                            className="w-16 h-14 object-contain bg-slate-50 p-1 rounded-xl border shrink-0"
+                            referrerPolicy="no-referrer"
+                          />
+                        ) : (
+                          <div className="w-16 h-14 bg-slate-100 p-1 rounded-xl border shrink-0 flex items-center justify-center text-[9px] text-slate-400">
+                            No Img
+                          </div>
+                        )}
                         <div>
                           <div className="flex items-center gap-2 flex-wrap">
                             <span className="font-bold text-slate-900 text-sm">{eq.name}</span>
@@ -4135,11 +4169,15 @@ export const AdminDashboardModal: React.FC = () => {
                             <label className="block font-semibold text-slate-700">제품 이미지</label>
                             <div className="flex items-center gap-3">
                               <div className="relative w-12 h-12 rounded-lg border border-slate-200 overflow-hidden bg-white flex items-center justify-center p-0.5 shrink-0">
-                                <img
-                                  src={editingProductForm.imageUrl}
-                                  alt="preview"
-                                  className="w-full h-full object-contain"
-                                />
+                                {editingProductForm.imageUrl ? (
+                                  <img
+                                    src={editingProductForm.imageUrl}
+                                    alt="preview"
+                                    className="w-full h-full object-contain"
+                                  />
+                                ) : (
+                                  <span className="text-[9px] text-slate-400">No Img</span>
+                                )}
                               </div>
                               <label className="px-3 py-1.5 rounded-lg bg-purple-100 hover:bg-purple-200 text-purple-900 font-bold text-[11px] cursor-pointer border border-purple-300 flex items-center gap-1 shrink-0">
                                 <Upload className="w-3.5 h-3.5 text-purple-700" />
@@ -4248,12 +4286,16 @@ export const AdminDashboardModal: React.FC = () => {
                       <div key={prod.id} className="p-4 bg-white rounded-2xl border border-slate-200 flex items-center justify-between gap-3 hover:border-purple-300 transition-colors shadow-sm">
                         <div className="flex items-center gap-3 min-w-0">
                           <div className="relative w-14 h-14 bg-white p-1 rounded-xl border border-slate-200 shrink-0 overflow-hidden flex items-center justify-center">
-                            <img
-                              src={prod.imageUrl}
-                              alt={prod.title}
-                              className="w-full h-full object-contain"
-                              referrerPolicy="no-referrer"
-                            />
+                            {prod.imageUrl ? (
+                              <img
+                                src={prod.imageUrl}
+                                alt={prod.title}
+                                className="w-full h-full object-contain"
+                                referrerPolicy="no-referrer"
+                              />
+                            ) : (
+                              <span className="text-[9px] text-slate-300">No Img</span>
+                            )}
                           </div>
                           <div className="min-w-0">
                             <div className="flex items-center gap-2 flex-wrap">

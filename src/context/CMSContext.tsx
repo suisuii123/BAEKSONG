@@ -243,14 +243,27 @@ function sanitizeEquipments(eqs: Equipment[]): Equipment[] {
   });
 }
 
+const defaultHeroImages: Record<string, string> = {
+  'hero-slide-1': '/hero/hero_slide_1.jpg',
+  'hero-slide-2': '/hero/hero_slide_2.jpg',
+  'hero-slide-3': '/hero/hero_slide_3.jpg',
+};
+
 function sanitizeHeroSlides(slides: HeroSlide[]): HeroSlide[] {
   if (!Array.isArray(slides) || slides.length === 0) return initialHeroSlides;
-  return slides.map((s) => {
-    const defaultImg = initialHeroSlideImageMap.get(s.id);
-    if (!s.imageUrl && defaultImg) {
-      return { ...s, imageUrl: defaultImg };
+  return slides.map((s, idx) => {
+    let img = s.imageUrl;
+    const fallback = defaultHeroImages[s.id] || `/hero/hero_slide_${(idx % 3) + 1}.jpg`;
+    // If imageUrl is empty, or points to the old broken external bucket/links
+    if (
+      !img ||
+      img.includes('pro-axis-wdw25') ||
+      img.includes('hero_slide_2_hero-slide-2') ||
+      img.includes('hero_slide_3_hero-slide-3')
+    ) {
+      img = fallback;
     }
-    return s;
+    return { ...s, imageUrl: img };
   });
 }
 

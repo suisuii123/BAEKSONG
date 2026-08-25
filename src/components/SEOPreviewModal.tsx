@@ -33,9 +33,12 @@ export const SEOPreviewModal: React.FC = () => {
 
         {/* Google Search Result Preview */}
         <div className="mb-6 p-5 rounded-2xl bg-slate-50 border border-slate-200">
-          <div className="flex items-center gap-2 text-xs text-slate-500 mb-1">
-            <Search className="w-3.5 h-3.5 text-blue-600" />
-            <span className="font-mono text-[11px]">https://www.baeksongeng.co.kr</span>
+          <div className="flex items-center gap-2 text-xs text-slate-500 mb-1.5">
+            <img src="/favicon.png" alt="Baeksong Favicon" className="w-5 h-5 rounded-md object-contain border border-slate-200 shadow-sm" />
+            <div className="flex flex-col">
+              <span className="font-semibold text-slate-800 text-xs">baeksongeng.com</span>
+              <span className="font-mono text-[10px] text-slate-400">https://baeksongeng.com</span>
+            </div>
           </div>
           <h4 className="text-base font-bold text-blue-700 hover:underline cursor-pointer">
             {t.companyName} | 반도체 장비 메탈 부품 초정밀 가공 전문기업
