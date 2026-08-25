@@ -40,12 +40,6 @@ export const AboutSection: React.FC = () => {
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-stretch mb-20">
           {/* Left Text Box (CEO Greeting) */}
           <div className="lg:col-span-7 bg-white p-8 sm:p-10 rounded-3xl border border-teal-200 shadow-lg shadow-teal-900/5 relative flex flex-col justify-between">
-            <div className="absolute top-6 right-6">
-              <span className="px-3 py-1 rounded-full bg-teal-50 border border-teal-200 text-[#2BB8A1] text-xs font-extrabold">
-                CEO MESSAGE
-              </span>
-            </div>
-
             <div>
               <div className="flex items-center gap-4 mb-6">
                 {companyInfo.ceoImageUrl ? (

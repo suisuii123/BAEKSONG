@@ -4,7 +4,7 @@ import { useLanguage } from '../../context/LanguageContext';
 import { Product, Equipment, NewsPost, HistoryItem, Department, Language, HeroSlide, ProductCategory, OrgCeoInfo, OrgQualityInfo, FactoryPhotoItem } from '../../types';
 import { autoTranslateText } from '../../utils/translator';
 import { submitToFormspree, DEFAULT_FORMSPREE_ENDPOINT } from '../../utils/formspree';
-import { drawWatermarkOnCanvas, applyWatermarkToImage } from '../../utils/watermark';
+import { drawWatermarkOnCanvas, applyWatermarkToImage, makeWhiteBackgroundTransparent, generateOfficialTransparentWatermark } from '../../utils/watermark';
 import { ProductWatermarkOverlay } from '../ProductWatermarkOverlay';
 import { uploadImageToStorage } from '../../services/firebaseStorage';
 import {
@@ -224,6 +224,9 @@ export const AdminDashboardModal: React.FC = () => {
   const [newProdMakerCn, setNewProdMakerCn] = useState('');
   const [newProdCat, setNewProdCat] = useState<string>('chamber');
   const [newProdImageUrl, setNewProdImageUrl] = useState('');
+  const [newProdHideWatermark, setNewProdHideWatermark] = useState(false);
+  const [watermarkPreviewBg, setWatermarkPreviewBg] = useState<'dark' | 'light'>('dark');
+  const [isAutoCleaningWatermark, setIsAutoCleaningWatermark] = useState(false);
 
   // State for adding Equipment
   const [newEqName, setNewEqName] = useState('');
@@ -2348,6 +2351,302 @@ export const AdminDashboardModal: React.FC = () => {
                     </div>
                   </div>
                 </div>
+
+                {/* 3. Product Watermark Configuration & Custom Image Upload Card */}
+                <div className="p-5 bg-gradient-to-br from-slate-900 to-slate-800 text-white rounded-2xl border border-slate-700 shadow-sm space-y-4">
+                  <div className="flex items-center justify-between flex-wrap gap-2">
+                    <div className="flex items-center gap-2">
+                      <ShieldCheck className="w-5 h-5 text-emerald-400" />
+                      <h4 className="text-sm font-bold text-white">
+                        제품 사진 워터마크(Watermark) 설정 & 사각형 잔상 제거
+                      </h4>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-[11px] font-bold text-emerald-300 bg-emerald-950/80 px-2.5 py-0.5 rounded-full border border-emerald-500/30">
+                        투명 벡터 & 누끼(배경 제거) 지원
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Mode Selector */}
+                  <div className="bg-slate-950/80 p-3 rounded-xl border border-slate-700/80 space-y-2">
+                    <div className="flex items-center justify-between">
+                      <div className="text-xs font-bold text-slate-300">워터마크 출력 방식 선택:</div>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const transparentPng = generateOfficialTransparentWatermark();
+                          updateCompanyInfo({
+                            watermarkMode: 'vector',
+                            watermarkImage: '',
+                            enableWatermark: true,
+                            watermarkOpacity: 0.35,
+                          });
+                          showToast('공식 투명 워터마크(사각 잔상 0%)로 즉시 교체되었습니다.');
+                        }}
+                        className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs shadow transition-colors cursor-pointer"
+                      >
+                        <Sparkles className="w-3.5 h-3.5" />
+                        <span>✨ 사각 잔상 0% 공식 워터마크 즉시 적용</span>
+                      </button>
+                    </div>
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                      <button
+                        type="button"
+                        onClick={() => updateCompanyInfo({ watermarkMode: 'vector', enableWatermark: true, watermarkImage: '' })}
+                        className={`px-3 py-2.5 rounded-xl border text-xs font-bold transition-all text-left flex flex-col gap-1 cursor-pointer ${
+                          (companyInfo.watermarkMode === 'vector' || (!companyInfo.watermarkMode && !companyInfo.watermarkImage))
+                            ? 'bg-emerald-900/60 border-emerald-500 text-emerald-200 ring-1 ring-emerald-500'
+                            : 'bg-slate-900 border-slate-700 text-slate-400 hover:border-slate-500'
+                        }`}
+                      >
+                        <div className="flex items-center gap-1.5 font-extrabold text-white">
+                          <span>✨ 1. 공식 투명 벡터 로고</span>
+                          {(companyInfo.watermarkMode === 'vector' || (!companyInfo.watermarkMode && !companyInfo.watermarkImage)) && (
+                            <span className="text-[10px] bg-emerald-500 text-black px-1.5 py-0.2 rounded font-bold">선택됨</span>
+                          )}
+                        </div>
+                        <span className="text-[10px] text-slate-300 font-normal">
+                          사각형 박스 0% 잔상 없음. 백송이엔지 고화질 공식 심볼 및 로고가 투명 오버레이됩니다. (가장 깔끔함)
+                        </span>
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => updateCompanyInfo({ watermarkMode: 'custom', enableWatermark: true })}
+                        className={`px-3 py-2.5 rounded-xl border text-xs font-bold transition-all text-left flex flex-col gap-1 cursor-pointer ${
+                          companyInfo.watermarkMode === 'custom' || (!companyInfo.watermarkMode && !!companyInfo.watermarkImage)
+                            ? 'bg-purple-900/60 border-purple-500 text-purple-200 ring-1 ring-purple-500'
+                            : 'bg-slate-900 border-slate-700 text-slate-400 hover:border-slate-500'
+                        }`}
+                      >
+                        <div className="flex items-center gap-1.5 font-extrabold text-white">
+                          <span>🖼️ 2. 직접 업로드 이미지</span>
+                          {(companyInfo.watermarkMode === 'custom' || (!companyInfo.watermarkMode && !!companyInfo.watermarkImage)) && (
+                            <span className="text-[10px] bg-purple-500 text-white px-1.5 py-0.2 rounded font-bold">선택됨</span>
+                          )}
+                        </div>
+                        <span className="text-[10px] text-slate-300 font-normal">
+                          관리자가 등록한 워터마크 파일에서 흰색/회색 사각형 배경을 100% 투명화 처리하여 표시합니다.
+                        </span>
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => updateCompanyInfo({ watermarkMode: 'off', enableWatermark: false })}
+                        className={`px-3 py-2.5 rounded-xl border text-xs font-bold transition-all text-left flex flex-col gap-1 cursor-pointer ${
+                          companyInfo.watermarkMode === 'off' || companyInfo.enableWatermark === false
+                            ? 'bg-amber-900/60 border-amber-500 text-amber-200 ring-1 ring-amber-500'
+                            : 'bg-slate-900 border-slate-700 text-slate-400 hover:border-slate-500'
+                        }`}
+                      >
+                        <div className="flex items-center gap-1.5 font-extrabold text-white">
+                          <span>🚫 3. 워터마크 오버레이 OFF</span>
+                          {(companyInfo.watermarkMode === 'off' || companyInfo.enableWatermark === false) && (
+                            <span className="text-[10px] bg-amber-500 text-black px-1.5 py-0.2 rounded font-bold">꺼짐</span>
+                          )}
+                        </div>
+                        <span className="text-[10px] text-slate-300 font-normal">
+                          모든 제품 카드에서 워터마크 오버레이를 끕니다. (이미 사진 자체에 워터마크가 있을 때 권장)
+                        </span>
+                      </button>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-1">
+                    {/* Left: Current Watermark Preview with Dark/Light Background Switch */}
+                    <div className="p-3.5 bg-slate-950/60 rounded-xl border border-slate-700/80 space-y-3">
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs font-bold text-slate-200">실시간 워터마크 투명도 검사기</span>
+                        <div className="flex items-center gap-1 bg-slate-900 p-0.5 rounded-lg border border-slate-700 text-[10px]">
+                          <button
+                            type="button"
+                            onClick={() => setWatermarkPreviewBg('dark')}
+                            className={`px-2 py-0.5 rounded ${watermarkPreviewBg === 'dark' ? 'bg-slate-800 text-white font-bold' : 'text-slate-400'}`}
+                          >
+                            다크 제품 배경
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setWatermarkPreviewBg('light')}
+                            className={`px-2 py-0.5 rounded ${watermarkPreviewBg === 'light' ? 'bg-white text-slate-900 font-bold' : 'text-slate-400'}`}
+                          >
+                            화이트 제품 배경
+                          </button>
+                        </div>
+                      </div>
+
+                      <div
+                        className={`h-36 rounded-xl border flex items-center justify-center p-4 relative overflow-hidden transition-colors ${
+                          watermarkPreviewBg === 'dark'
+                            ? 'bg-slate-950 border-slate-800'
+                            : 'bg-slate-100 border-slate-300'
+                        }`}
+                      >
+                        {/* Simulation of underlying metallic product texture */}
+                        <div className="absolute inset-0 flex items-center justify-center opacity-20 pointer-events-none">
+                          <span className="text-xs font-mono tracking-widest text-slate-500 uppercase">PRODUCT PHOTO AREA</span>
+                        </div>
+
+                        {companyInfo.watermarkMode === 'off' || companyInfo.enableWatermark === false ? (
+                          <div className="text-center text-xs text-amber-400 font-medium">
+                            🚫 워터마크 오버레이가 비활성화(OFF) 상태입니다.<br />
+                            <span className="text-[11px] text-slate-400">제품 원본 사진만 그대로 표시됩니다.</span>
+                          </div>
+                        ) : (companyInfo.watermarkMode === 'custom' || (!companyInfo.watermarkMode && !!companyInfo.watermarkImage)) && companyInfo.watermarkImage ? (
+                          <img
+                            src={companyInfo.watermarkImage}
+                            alt="Custom Watermark"
+                            className="max-h-24 max-w-full object-contain relative z-10"
+                            style={{ opacity: companyInfo.watermarkOpacity ?? 0.35 }}
+                            referrerPolicy="no-referrer"
+                          />
+                        ) : (
+                          <svg
+                            viewBox="0 0 500 380"
+                            fill="none"
+                            xmlns="http://www.w3.org/2000/svg"
+                            className="max-h-28 max-w-full relative z-10 drop-shadow-[0_2px_8px_rgba(0,0,0,0.25)]"
+                            style={{ opacity: companyInfo.watermarkOpacity ?? 0.35 }}
+                          >
+                            {/* Transparent Circular Loop */}
+                            <circle cx="250" cy="100" r="54" stroke={watermarkPreviewBg === 'dark' ? '#94A3B8' : '#64748B'} strokeWidth="7" fill="none" strokeDasharray="140 30" strokeDashoffset="15" />
+                            <path d="M 218 52 L 230 46 L 227 58 Z" fill={watermarkPreviewBg === 'dark' ? '#94A3B8' : '#64748B'} />
+                            <path d="M 282 148 L 270 154 L 273 142 Z" fill={watermarkPreviewBg === 'dark' ? '#94A3B8' : '#64748B'} />
+                            <path d="M 232 66 C 232 66 238 66 254 66 C 267 66 274 72 274 81 C 274 89 267 93 259 95 C 270 97 277 103 277 114 C 277 126 267 134 250 134 C 236 134 232 134 232 134 L 232 66 Z M 244 76 L 244 92 L 253 92 C 261 92 264 88 264 84 C 264 79 260 76 253 76 L 244 76 Z M 244 102 L 244 124 L 254 124 C 262 124 266 119 266 113 C 266 107 261 102 253 102 L 244 102 Z" fill={watermarkPreviewBg === 'dark' ? '#CBD5E1' : '#334155'} />
+                            <path d="M 221 66 C 225 66 230 63 232 59 L 232 68 Z" fill="#10B981" />
+                            <text x="250" y="218" textAnchor="middle" fill={watermarkPreviewBg === 'dark' ? '#E2E8F0' : '#0F172A'} fontFamily="sans-serif" fontSize="34" fontWeight="900" letterSpacing="5">BAEKSONG ENG</text>
+                            <line x1="70" y1="248" x2="140" y2="248" stroke={watermarkPreviewBg === 'dark' ? '#94A3B8' : '#64748B'} strokeWidth="2" strokeLinecap="round" />
+                            <text x="250" y="253" textAnchor="middle" fill={watermarkPreviewBg === 'dark' ? '#94A3B8' : '#64748B'} fontFamily="sans-serif" fontSize="13.5" fontWeight="800" letterSpacing="5">PRECISION · QUALITY · TRUST</text>
+                            <line x1="360" y1="248" x2="430" y2="248" stroke={watermarkPreviewBg === 'dark' ? '#94A3B8' : '#64748B'} strokeWidth="2" strokeLinecap="round" />
+                          </svg>
+                        )}
+                      </div>
+
+                      <div className="flex items-center justify-between text-[11px] text-slate-400">
+                        <span>현재 상태: <strong className="text-emerald-400">
+                          {companyInfo.watermarkMode === 'off' || companyInfo.enableWatermark === false
+                            ? '오버레이 끄기 (OFF)'
+                            : (companyInfo.watermarkMode === 'custom' || (!companyInfo.watermarkMode && !!companyInfo.watermarkImage))
+                            ? '직접 업로드 이미지'
+                            : '공식 투명 벡터 (잔상 0%)'}
+                        </strong></span>
+                        {companyInfo.watermarkImage && (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              updateCompanyInfo({ watermarkImage: '', watermarkMode: 'vector' });
+                              showToast('업로드 이미지를 삭제하고 공식 투명 벡터로 복원했습니다.');
+                            }}
+                            className="text-red-400 hover:underline cursor-pointer"
+                          >
+                            업로드 이미지 삭제 & 공식 벡터 복원
+                          </button>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Right: Controls, Upload & Sensitivity Slider */}
+                    <div className="p-3.5 bg-slate-950/60 rounded-xl border border-slate-700/80 space-y-3">
+                      <div>
+                        <label className="block text-xs font-bold text-slate-200 mb-1.5">
+                          새 워터마크 이미지 등록 (자동 배경 투명화)
+                        </label>
+                        <div className="flex items-center gap-2">
+                          <label className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-purple-600 hover:bg-purple-500 text-white font-bold text-xs cursor-pointer shadow-sm transition-colors shrink-0">
+                            <Upload className="w-3.5 h-3.5" />
+                            <span>워터마크 파일 선택</span>
+                            <input
+                              type="file"
+                              accept="image/*"
+                              className="hidden"
+                              onChange={(e) => {
+                                if (e.target.files?.[0]) {
+                                  handleFileUpload(e.target.files[0], async (dataUrl) => {
+                                    const transparentUrl = await makeWhiteBackgroundTransparent(dataUrl, companyInfo.watermarkBgRemovalLevel || 45);
+                                    updateCompanyInfo({ watermarkImage: transparentUrl, watermarkMode: 'custom', enableWatermark: true });
+                                    showToast('워터마크 이미지의 사각형 배경이 완전 투명화되었습니다.');
+                                  });
+                                }
+                              }}
+                            />
+                          </label>
+                          {companyInfo.watermarkImage && (
+                            <button
+                              type="button"
+                              disabled={isAutoCleaningWatermark}
+                              onClick={async () => {
+                                setIsAutoCleaningWatermark(true);
+                                try {
+                                  const transparent = await makeWhiteBackgroundTransparent(
+                                    companyInfo.watermarkImage!,
+                                    companyInfo.watermarkBgRemovalLevel || 45
+                                  );
+                                  updateCompanyInfo({ watermarkImage: transparent, watermarkMode: 'custom' });
+                                  showToast('사각 배경이 완전히 제거된 100% 투명 PNG로 변환되었습니다.');
+                                } finally {
+                                  setIsAutoCleaningWatermark(false);
+                                }
+                              }}
+                              className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-xl bg-emerald-950 text-emerald-300 hover:bg-emerald-900 border border-emerald-700 text-xs font-bold transition-colors cursor-pointer shrink-0"
+                            >
+                              <Sparkles className="w-3.5 h-3.5" />
+                              <span>{isAutoCleaningWatermark ? '처리 중...' : '사각 배경 누끼 100% 제거'}</span>
+                            </button>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Opacity Slider */}
+                      <div>
+                        <div className="flex items-center justify-between text-xs font-bold text-slate-200 mb-1">
+                          <span>워터마크 선명도 (투명도)</span>
+                          <span className="text-emerald-400 font-mono">
+                            {Math.round((companyInfo.watermarkOpacity ?? 0.35) * 100)}%
+                          </span>
+                        </div>
+                        <input
+                          type="range"
+                          min="0.1"
+                          max="0.9"
+                          step="0.02"
+                          value={companyInfo.watermarkOpacity ?? 0.35}
+                          onChange={(e) => updateCompanyInfo({ watermarkOpacity: parseFloat(e.target.value) })}
+                          className="w-full h-1.5 bg-slate-700 rounded-lg appearance-none cursor-pointer accent-emerald-500"
+                        />
+                        <div className="flex justify-between text-[10px] text-slate-500 pt-0.5">
+                          <span>은은하게 (10%)</span>
+                          <span>기본 권장 (35%)</span>
+                          <span>진하게 (90%)</span>
+                        </div>
+                      </div>
+
+                      {/* Batch Duplicate Watermark Fix Tool */}
+                      <div className="pt-2 border-t border-slate-800">
+                        <div className="flex items-center justify-between gap-2 flex-wrap">
+                          <span className="text-[11px] text-slate-400">
+                            이미 사진에 워터마크가 각인되어 있나요?
+                          </span>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              // Batch toggle: set hideWatermark on products that already have watermarks
+                              products.forEach((p) => {
+                                if (p.categoryName?.includes('300mm') || p.title.toLowerCase().includes('liner') || p.title.toLowerCase().includes('chamber')) {
+                                  updateProduct(p.id, { hideWatermark: true });
+                                }
+                              });
+                              showToast('사진 자체에 워터마크가 있는 제품들의 오버레이를 일괄 숨겼습니다.');
+                            }}
+                            className="px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-amber-300 border border-slate-700 text-[11px] font-bold transition-colors cursor-pointer"
+                          >
+                            중복 제품 오버레이 일괄 끄기
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
               </div>
 
               {/* 3. History Timeline Items Manager */}
@@ -3768,9 +4067,9 @@ export const AdminDashboardModal: React.FC = () => {
                 <div className="p-3 bg-white rounded-xl border border-slate-200 space-y-2">
                   <div className="flex items-center justify-between">
                     <label className="block font-semibold text-slate-700 text-xs">제품 대표 이미지 파일 업로드</label>
-                    <span className="text-[11px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-200 flex items-center gap-1">
+                    <span className="text-[11px] font-bold text-slate-600 bg-slate-100 px-2 py-0.5 rounded-md border border-slate-200 flex items-center gap-1">
                       <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
-                      <span>BAEKSONG ENG 워터마크 자동 합성</span>
+                      <span>업로드 원본 유지 (중복 워터마크 방지)</span>
                     </span>
                   </div>
                   <div className="flex items-center gap-3">
@@ -3788,7 +4087,7 @@ export const AdminDashboardModal: React.FC = () => {
                               (dataUrl) => {
                                 setNewProdImageUrl(dataUrl);
                               },
-                              { watermark: true }
+                              { watermark: false }
                             );
                           }
                         }}
@@ -3806,13 +4105,25 @@ export const AdminDashboardModal: React.FC = () => {
                     <div className="pt-2 flex items-center gap-3">
                       <div className="relative w-16 h-16 rounded-lg border border-slate-200 overflow-hidden bg-white flex items-center justify-center p-1 shrink-0">
                         <img src={newProdImageUrl} alt="preview" className="w-full h-full object-contain" />
-                        <ProductWatermarkOverlay opacity={0.35} size="sm" />
                       </div>
                       <span className="text-[11px] text-slate-500">
-                        업로드된 이미지에 BAEKSONG ENG 정품 워터마크가 안전하게 포함되었습니다.
+                        선택된 원본 이미지가 깨끗하게 등록됩니다.
                       </span>
                     </div>
                   )}
+
+                  {/* Watermark Toggle */}
+                  <label className="flex items-center gap-2 pt-2 border-t border-slate-100 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={!newProdHideWatermark}
+                      onChange={(e) => setNewProdHideWatermark(!e.target.checked)}
+                      className="w-4 h-4 text-emerald-600 rounded border-slate-300 focus:ring-emerald-500"
+                    />
+                    <span className="text-xs font-semibold text-slate-700">
+                      제품 카드에 정품 워터마크 오버레이 표시 <span className="text-slate-400 font-normal">(사진 자체에 이미 워터마크가 있으면 체크 해제)</span>
+                    </span>
+                  </label>
                 </div>
 
                 <button
@@ -3866,6 +4177,7 @@ export const AdminDashboardModal: React.FC = () => {
                       category: newProdCat,
                       categoryName: selectedCategoryObj?.name || newProdCat.toUpperCase(),
                       imageUrl: newProdImageUrl.trim() || '',
+                      hideWatermark: newProdHideWatermark,
                       featured: true,
                     });
                     alert('제품이 등록되었으며 영문 및 중문 정보가 저장되었습니다.');
@@ -3879,6 +4191,7 @@ export const AdminDashboardModal: React.FC = () => {
                     setNewProdMakerEn('');
                     setNewProdMakerCn('');
                     setNewProdImageUrl('');
+                    setNewProdHideWatermark(false);
                   }}
                   className="px-5 py-2.5 bg-purple-600 hover:bg-purple-700 text-white font-bold text-xs rounded-xl flex items-center gap-1.5 shadow-md cursor-pointer"
                 >
@@ -4081,9 +4394,9 @@ export const AdminDashboardModal: React.FC = () => {
                           <div className="p-3 bg-white rounded-xl border border-slate-200 space-y-2 text-xs">
                             <div className="flex items-center justify-between">
                               <label className="block font-semibold text-slate-700">제품 이미지</label>
-                              <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200 flex items-center gap-1">
+                              <span className="text-[10px] font-bold text-slate-600 bg-slate-100 px-2 py-0.5 rounded border border-slate-200 flex items-center gap-1">
                                 <ShieldCheck className="w-3 h-3 text-emerald-600" />
-                                <span>워터마크 자동 합성</span>
+                                <span>원본 유지 (중복 워터마크 없음)</span>
                               </span>
                             </div>
                             <div className="flex items-center gap-3">
@@ -4093,7 +4406,6 @@ export const AdminDashboardModal: React.FC = () => {
                                   alt="preview"
                                   className="w-full h-full object-contain"
                                 />
-                                <ProductWatermarkOverlay opacity={0.35} size="sm" />
                               </div>
                               <label className="px-3 py-1.5 rounded-lg bg-purple-100 hover:bg-purple-200 text-purple-900 font-bold text-[11px] cursor-pointer border border-purple-300 flex items-center gap-1 shrink-0">
                                 <Upload className="w-3.5 h-3.5 text-purple-700" />
@@ -4109,7 +4421,7 @@ export const AdminDashboardModal: React.FC = () => {
                                         (dataUrl) => {
                                           setEditingProductForm({ ...editingProductForm, imageUrl: dataUrl });
                                         },
-                                        { watermark: true }
+                                        { watermark: false }
                                       );
                                     }
                                   }}
@@ -4122,6 +4434,19 @@ export const AdminDashboardModal: React.FC = () => {
                                 className="flex-1 px-3 py-1.5 rounded-lg border border-slate-300 font-mono text-xs"
                               />
                             </div>
+
+                            {/* Watermark Toggle */}
+                            <label className="flex items-center gap-2 pt-2 border-t border-slate-100 cursor-pointer">
+                              <input
+                                type="checkbox"
+                                checked={!editingProductForm.hideWatermark}
+                                onChange={(e) => setEditingProductForm({ ...editingProductForm, hideWatermark: !e.target.checked })}
+                                className="w-4 h-4 text-emerald-600 rounded border-slate-300 focus:ring-emerald-500"
+                              />
+                              <span className="text-xs font-semibold text-slate-700">
+                                제품 카드에 정품 워터마크 오버레이 표시 <span className="text-slate-400 font-normal">(사진 자체에 이미 워터마크가 있으면 체크 해제)</span>
+                              </span>
+                            </label>
                           </div>
 
                           {/* Action Buttons */}
@@ -4199,7 +4524,6 @@ export const AdminDashboardModal: React.FC = () => {
                               className="w-full h-full object-contain"
                               referrerPolicy="no-referrer"
                             />
-                            <ProductWatermarkOverlay opacity={0.35} size="sm" />
                           </div>
                           <div className="min-w-0">
                             <div className="flex items-center gap-2 flex-wrap">
@@ -4233,6 +4557,25 @@ export const AdminDashboardModal: React.FC = () => {
                           </div>
                         </div>
                         <div className="flex items-center gap-1.5 shrink-0">
+                          {/* 1-Click Quick Watermark Toggle to prevent duplication */}
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const nextVal = !prod.hideWatermark;
+                              updateProduct(prod.id, { hideWatermark: nextVal });
+                              showToast(`'${prod.title}' 워터마크 오버레이: ${nextVal ? '숨김(OFF)' : '표시(ON)'}`);
+                            }}
+                            className={`px-2.5 py-1.5 rounded-xl border font-bold text-xs flex items-center gap-1 transition-colors cursor-pointer ${
+                              prod.hideWatermark
+                                ? 'bg-amber-50 text-amber-800 border-amber-300 hover:bg-amber-100'
+                                : 'bg-emerald-50 text-emerald-800 border-emerald-300 hover:bg-emerald-100'
+                            }`}
+                            title={prod.hideWatermark ? '워터마크 오버레이 OFF (사진에 이미 각인됨)' : '워터마크 오버레이 ON'}
+                          >
+                            <ShieldCheck className={`w-3.5 h-3.5 ${prod.hideWatermark ? 'text-amber-600' : 'text-emerald-600'}`} />
+                            <span>{prod.hideWatermark ? '워터마크 OFF' : '워터마크 ON'}</span>
+                          </button>
+
                           <button
                             type="button"
                             onClick={() => {

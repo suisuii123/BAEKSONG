@@ -353,8 +353,8 @@ export const TechProductsSection: React.FC = () => {
                       </div>
                     )}
 
-                    {/* Official BAEKSONG ENG Corporate Watermark Overlay */}
-                    <ProductWatermarkOverlay opacity={0.38} size="md" />
+                    {/* Official / Custom BAEKSONG ENG Watermark Overlay */}
+                    {!prod.hideWatermark && <ProductWatermarkOverlay size="md" />}
                   </div>
 
                   {/* Card Content - Title, P/N, MAKER */}

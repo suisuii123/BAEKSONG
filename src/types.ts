@@ -27,6 +27,11 @@ export interface CompanyInfo {
   instagramLink: string;
   factoryImage?: string;
   ceoImageUrl?: string;
+  watermarkImage?: string;
+  watermarkOpacity?: number;
+  enableWatermark?: boolean;
+  watermarkMode?: 'vector' | 'custom' | 'off';
+  watermarkBgRemovalLevel?: number;
 }
 
 export interface ThemeConfig {
@@ -112,6 +117,7 @@ export interface Product {
   surfaceFinishCn?: string;
   imageUrl: string;
   featured: boolean;
+  hideWatermark?: boolean;
   specs?: { [key: string]: string };
 }
 

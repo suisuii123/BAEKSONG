@@ -277,6 +277,11 @@ function sanitizeCompanyInfo(info: CompanyInfo): CompanyInfo {
     ...info,
     factoryImage: info.factoryImage || initialCompanyInfo.factoryImage || '',
     formspreeUrl: info.formspreeUrl || 'https://formspree.io/f/xgawngpn',
+    watermarkImage: info.watermarkImage !== undefined ? info.watermarkImage : (initialCompanyInfo.watermarkImage || ''),
+    watermarkOpacity: info.watermarkOpacity !== undefined ? info.watermarkOpacity : (initialCompanyInfo.watermarkOpacity ?? 0.35),
+    enableWatermark: info.enableWatermark !== undefined ? info.enableWatermark : (initialCompanyInfo.enableWatermark ?? true),
+    watermarkMode: info.watermarkMode || initialCompanyInfo.watermarkMode || (info.watermarkImage ? 'custom' : 'vector'),
+    watermarkBgRemovalLevel: info.watermarkBgRemovalLevel ?? initialCompanyInfo.watermarkBgRemovalLevel ?? 45,
   };
 }
 
