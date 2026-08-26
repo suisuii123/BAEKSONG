@@ -115,11 +115,11 @@ export const Hero: React.FC = () => {
             >
               {slide.imageUrl ? (
                 <img
-                  src={slide.imageUrl}
+                  src={slide.imageUrl || `/hero/hero_slide_${(index % 3) + 1}.jpg`}
                   alt={slide.title}
                   onError={(e) => {
                     const fallback = `/hero/hero_slide_${(index % 3) + 1}.jpg`;
-                    if (e.currentTarget.src !== fallback) {
+                    if (!e.currentTarget.src.endsWith(fallback)) {
                       e.currentTarget.src = fallback;
                     }
                   }}

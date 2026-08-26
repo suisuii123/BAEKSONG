@@ -1371,11 +1371,11 @@ export const AdminDashboardModal: React.FC = () => {
                             <div className="w-full md:w-48 h-28 rounded-xl overflow-hidden bg-slate-900 shrink-0 border border-slate-200 relative group flex items-center justify-center">
                               {slide.imageUrl ? (
                                 <img
-                                  src={slide.imageUrl}
+                                  src={slide.imageUrl || `/hero/hero_slide_${(idx % 3) + 1}.jpg`}
                                   alt={slide.title}
                                   onError={(e) => {
                                     const fallback = `/hero/hero_slide_${(idx % 3) + 1}.jpg`;
-                                    if (e.currentTarget.src !== fallback) {
+                                    if (!e.currentTarget.src.endsWith(fallback)) {
                                       e.currentTarget.src = fallback;
                                     }
                                   }}

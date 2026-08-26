@@ -252,14 +252,17 @@ const defaultHeroImages: Record<string, string> = {
 function sanitizeHeroSlides(slides: HeroSlide[]): HeroSlide[] {
   if (!Array.isArray(slides) || slides.length === 0) return initialHeroSlides;
   return slides.map((s, idx) => {
-    let img = s.imageUrl;
+    let img = (s.imageUrl || '').trim();
     const fallback = defaultHeroImages[s.id] || `/hero/hero_slide_${(idx % 3) + 1}.jpg`;
-    // If imageUrl is empty, or points to the old broken external bucket/links
+    // Only replace if completely empty or pointing to the obsolete deleted template tokens
     if (
       !img ||
-      img.includes('pro-axis-wdw25') ||
+      img.includes('hero_slide_1_hero-slide-1') ||
       img.includes('hero_slide_2_hero-slide-2') ||
-      img.includes('hero_slide_3_hero-slide-3')
+      img.includes('hero_slide_3_hero-slide-3') ||
+      img.includes('/hero_slides%2Fhero_slide_1') ||
+      img.includes('/hero_slides%2Fhero_slide_2') ||
+      img.includes('/hero_slides%2Fhero_slide_3')
     ) {
       img = fallback;
     }
