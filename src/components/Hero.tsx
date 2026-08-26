@@ -14,6 +14,11 @@ import {
   Pause,
   Play,
 } from 'lucide-react';
+import defaultHero1 from '../assets/images/hero_vm960l_machining_1787646786697.jpg';
+import defaultHero2 from '../assets/images/hero_slide_2_exact_product_1787647780186.jpg';
+import defaultHero3 from '../assets/images/hero_slide_inspection_1787646308926.jpg';
+
+const defaultHeroList = [defaultHero1, defaultHero2, defaultHero3];
 
 export const Hero: React.FC = () => {
   const { companyInfo, themeConfig, heroSlides } = useCMS();
@@ -113,13 +118,13 @@ export const Hero: React.FC = () => {
                 isActive ? 'opacity-100 z-10' : 'opacity-0 z-0 pointer-events-none'
               }`}
             >
-              {slide.imageUrl ? (
+              {slide.imageUrl || defaultHeroList[index % 3] ? (
                 <img
-                  src={slide.imageUrl || `/hero/hero_slide_${(index % 3) + 1}.jpg`}
+                  src={slide.imageUrl || defaultHeroList[index % 3]}
                   alt={slide.title}
                   onError={(e) => {
-                    const fallback = `/hero/hero_slide_${(index % 3) + 1}.jpg`;
-                    if (!e.currentTarget.src.endsWith(fallback)) {
+                    const fallback = defaultHeroList[index % 3];
+                    if (fallback && e.currentTarget.src !== fallback) {
                       e.currentTarget.src = fallback;
                     }
                   }}

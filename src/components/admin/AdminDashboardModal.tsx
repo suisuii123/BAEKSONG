@@ -5,6 +5,11 @@ import { Product, Equipment, NewsPost, HistoryItem, Department, Language, HeroSl
 import { autoTranslateText } from '../../utils/translator';
 import { submitToFormspree, DEFAULT_FORMSPREE_ENDPOINT } from '../../utils/formspree';
 import { uploadImageToStorage } from '../../services/firebaseStorage';
+import defaultHero1 from '../../assets/images/hero_vm960l_machining_1787646786697.jpg';
+import defaultHero2 from '../../assets/images/hero_slide_2_exact_product_1787647780186.jpg';
+import defaultHero3 from '../../assets/images/hero_slide_inspection_1787646308926.jpg';
+
+const defaultHeroList = [defaultHero1, defaultHero2, defaultHero3];
 import {
   X,
   Settings,
@@ -1369,13 +1374,13 @@ export const AdminDashboardModal: React.FC = () => {
                           <div className="flex flex-col md:flex-row items-center gap-4 justify-between">
                             {/* Image Thumbnail */}
                             <div className="w-full md:w-48 h-28 rounded-xl overflow-hidden bg-slate-900 shrink-0 border border-slate-200 relative group flex items-center justify-center">
-                              {slide.imageUrl ? (
+                              {slide.imageUrl || defaultHeroList[idx % 3] ? (
                                 <img
-                                  src={slide.imageUrl || `/hero/hero_slide_${(idx % 3) + 1}.jpg`}
+                                  src={slide.imageUrl || defaultHeroList[idx % 3]}
                                   alt={slide.title}
                                   onError={(e) => {
-                                    const fallback = `/hero/hero_slide_${(idx % 3) + 1}.jpg`;
-                                    if (!e.currentTarget.src.endsWith(fallback)) {
+                                    const fallback = defaultHeroList[idx % 3];
+                                    if (fallback && e.currentTarget.src !== fallback) {
                                       e.currentTarget.src = fallback;
                                     }
                                   }}
