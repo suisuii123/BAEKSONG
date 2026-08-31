@@ -79,8 +79,8 @@ export const Header: React.FC = () => {
             <CompanyLogo textSize="md" />
           </button>
 
-          {/* Desktop Nav */}
-          <nav className="hidden lg:flex items-center gap-1 bg-slate-100/90 p-1 lg:p-1.5 rounded-full border border-slate-200/80 backdrop-blur-md">
+          {/* Desktop Nav (Displayed on md: 768px and above) */}
+          <nav className="hidden md:flex items-center gap-0.5 lg:gap-1 bg-slate-100/90 p-1 lg:p-1.5 rounded-full border border-slate-200/80 backdrop-blur-md">
             {navItems.map((item) => {
               const isActive = activeNav === item.id;
               return (
@@ -88,7 +88,7 @@ export const Header: React.FC = () => {
                   key={item.id}
                   id={`nav-item-${item.id}`}
                   onClick={() => handleNavClick(item.id)}
-                  className={`px-3 lg:px-4 py-1.5 lg:py-2 rounded-full text-xs font-semibold transition-all duration-200 relative whitespace-nowrap ${
+                  className={`px-2.5 lg:px-4 py-1.5 lg:py-2 rounded-full text-xs font-semibold transition-all duration-200 relative whitespace-nowrap ${
                     isActive
                       ? 'bg-[#2BB8A1] text-white shadow-md shadow-teal-900/20'
                       : 'text-slate-600 hover:text-slate-900 hover:bg-white'
@@ -101,13 +101,13 @@ export const Header: React.FC = () => {
           </nav>
 
           {/* Desktop Right Action Buttons */}
-          <div className="hidden lg:flex items-center gap-2.5">
+          <div className="hidden md:flex items-center gap-1.5 lg:gap-2.5">
             {/* KO EN CN Language Selector Tabs */}
             <div
               id="header-lang-selector"
-              className="flex items-center bg-slate-100/90 p-1 rounded-xl border border-slate-200/90 gap-1 shadow-inner"
+              className="flex items-center bg-slate-100/90 p-1 rounded-xl border border-slate-200/90 gap-0.5 lg:gap-1 shadow-inner"
             >
-              <Globe className="w-3.5 h-3.5 text-[#2BB8A1] ml-1.5 mr-0.5" />
+              <Globe className="w-3.5 h-3.5 text-[#2BB8A1] ml-1 mr-0.5" />
               {languages.map((lang) => {
                 const isSelected = language === lang.code;
                 return (
@@ -115,7 +115,7 @@ export const Header: React.FC = () => {
                     key={lang.code}
                     id={`lang-tab-${lang.code}`}
                     onClick={() => setLanguage(lang.code)}
-                    className={`px-2.5 py-1 rounded-lg text-xs font-extrabold transition-all duration-200 ${
+                    className={`px-2 lg:px-2.5 py-1 rounded-lg text-xs font-extrabold transition-all duration-200 ${
                       isSelected
                         ? 'bg-[#2BB8A1] text-white shadow-sm scale-105'
                         : 'text-slate-600 hover:text-slate-900 hover:bg-white/80'
@@ -131,7 +131,7 @@ export const Header: React.FC = () => {
             <button
               id="header-seo-btn"
               onClick={() => setIsSeoModalOpen(true)}
-              className="p-2.5 rounded-xl bg-slate-100 hover:bg-slate-200/80 text-slate-700 border border-slate-200 transition-all text-xs flex items-center gap-1.5 cursor-pointer"
+              className="hidden lg:flex p-2.5 rounded-xl bg-slate-100 hover:bg-slate-200/80 text-slate-700 border border-slate-200 transition-all text-xs items-center gap-1.5 cursor-pointer"
               title="SEO & 소셜 미디어 메타데이터"
             >
               <Share2 className="w-4 h-4 text-[#2BB8A1]" />
@@ -143,7 +143,7 @@ export const Header: React.FC = () => {
                 id="header-studio-admin-btn"
                 type="button"
                 onClick={() => setIsAdminOpen(true)}
-                className="px-3 py-2.5 rounded-xl font-extrabold text-xs text-emerald-300 bg-slate-900 hover:bg-slate-800 border border-emerald-500/50 shadow-md flex items-center gap-1.5 transition-all hover:scale-105 active:scale-95 cursor-pointer"
+                className="hidden xl:flex px-3 py-2.5 rounded-xl font-extrabold text-xs text-emerald-300 bg-slate-900 hover:bg-slate-800 border border-emerald-500/50 shadow-md items-center gap-1.5 transition-all hover:scale-105 active:scale-95 cursor-pointer"
                 title="AI Studio 전용 CMS 관리자 열기"
               >
                 <Settings className="w-3.5 h-3.5 text-emerald-400 animate-spin" style={{ animationDuration: '10s' }} />
@@ -155,7 +155,7 @@ export const Header: React.FC = () => {
             <button
               id="header-quote-btn"
               onClick={() => setIsQuoteModalOpen(true)}
-              className="px-4 py-2.5 rounded-xl font-bold text-xs text-white transition-all duration-300 flex items-center gap-2 bg-[#2BB8A1] hover:bg-[#229E8A] shadow-md shadow-teal-900/20 hover:scale-105 active:scale-95 cursor-pointer"
+              className="px-3 lg:px-4 py-2 lg:py-2.5 rounded-xl font-bold text-xs text-white transition-all duration-300 flex items-center gap-1.5 lg:gap-2 bg-[#2BB8A1] hover:bg-[#229E8A] shadow-md shadow-teal-900/20 hover:scale-105 active:scale-95 cursor-pointer whitespace-nowrap"
             >
               <Mail className="w-4 h-4" />
               <span>{t.header.requestQuote}</span>
@@ -163,7 +163,7 @@ export const Header: React.FC = () => {
           </div>
 
           {/* Mobile Menu & Language Selector */}
-          <div className="flex lg:hidden items-center gap-2">
+          <div className="flex md:hidden items-center gap-2">
             {/* Language Selector Mobile */}
             <div className="flex items-center bg-slate-100 p-1 rounded-xl border border-slate-200 text-xs font-bold gap-0.5">
               {languages.map((lang) => (
