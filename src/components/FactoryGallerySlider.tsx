@@ -113,7 +113,7 @@ export const FactoryGallerySlider: React.FC = () => {
           {language === 'EN'
             ? 'Real Factory Facilities & Machining Centers'
             : language === 'CN'
-            ? '(주)백송이엔지 实际生产车间及加工现场'
+            ? '实际生产车间及加工现场'
             : '(주)백송이엔지 실제 공장 설비 및 가공 현장'}
         </h3>
 
