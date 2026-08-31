@@ -1,9 +1,10 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { useCMS } from '../context/CMSContext';
 import { useLanguage } from '../context/LanguageContext';
-import { Layers, Search, X, RotateCcw, Hash, Link2, Check, Share2 } from 'lucide-react';
+import { Layers, Search, X, RotateCcw, Hash } from 'lucide-react';
 import { initialProducts } from '../data/initialData';
-import { ProductWatermarkOverlay } from './ProductWatermarkOverlay';
+import { ProductCard } from './ProductCard';
+import { getProductImageSrc, getProductImageAlt } from '../data/products';
 
 const defaultFallbackMap: Record<string, string> = {};
 (initialProducts || []).forEach((p) => {
@@ -36,7 +37,7 @@ export const TechProductsSection: React.FC = () => {
     }
   }, []);
 
-  // Dynamic Google & Naver Schema.org Structured Data (JSON-LD) for Products
+  // Dynamic Google & Naver Schema.org Structured Data (JSON-LD) for Products with Image SEO
   useEffect(() => {
     if (typeof document === 'undefined' || !products.length) return;
 
@@ -50,31 +51,47 @@ export const TechProductsSection: React.FC = () => {
 
     const schemaData = {
       '@context': 'https://schema.org',
-      '@graph': products.map((p) => ({
-        '@type': 'Product',
-        name: p.title,
-        alternateName: [p.titleEn, p.titleCn].filter(Boolean),
-        image: p.imageUrl || defaultFallbackMap[p.id],
-        description: `${p.title} - 반도체 장비 메탈 부품 초정밀 가공. P/N: ${p.pn || p.pl || ''}, MAKER: ${p.maker || ''}`,
-        sku: p.pn || p.pl || p.id,
-        mpn: p.pn || p.pl || p.id,
-        brand: {
-          '@type': 'Brand',
-          name: p.maker || '(주)백송이엔지',
-        },
-        manufacturer: {
-          '@type': 'Organization',
-          name: '(주)백송이엔지 (BAEKSONG ENG)',
-          url: 'https://www.baeksongeng.co.kr',
-        },
-        offers: {
-          '@type': 'Offer',
-          url: `https://www.baeksongeng.co.kr/?pn=${encodeURIComponent(p.pn || p.pl || p.title)}`,
-          priceCurrency: 'KRW',
-          availability: 'https://schema.org/InStock',
-          itemCondition: 'https://schema.org/NewCondition',
-        },
-      })),
+      '@graph': products.map((p) => {
+        const seoImg = getProductImageSrc({
+          pn: p.pn || p.pl,
+          pl: p.pl,
+          imageUrl: p.imageUrl || defaultFallbackMap[p.id],
+        });
+        const seoAlt = getProductImageAlt({
+          pn: p.pn || p.pl,
+          pl: p.pl,
+          name: p.title,
+          title: p.title,
+          maker: p.maker,
+          spec: p.spec || p.description,
+        });
+
+        return {
+          '@type': 'Product',
+          name: p.title,
+          alternateName: [p.titleEn, p.titleCn].filter(Boolean),
+          image: seoImg,
+          description: seoAlt,
+          sku: p.pn || p.pl || p.id,
+          mpn: p.pn || p.pl || p.id,
+          brand: {
+            '@type': 'Brand',
+            name: p.maker || '(주)백송이엔지',
+          },
+          manufacturer: {
+            '@type': 'Organization',
+            name: '(주)백송이엔지 (BAEKSONG ENG)',
+            url: 'https://www.baeksongeng.co.kr',
+          },
+          offers: {
+            '@type': 'Offer',
+            url: `https://www.baeksongeng.co.kr/?pn=${encodeURIComponent(p.pn || p.pl || p.title)}`,
+            priceCurrency: 'KRW',
+            availability: 'https://schema.org/InStock',
+            itemCondition: 'https://schema.org/NewCondition',
+          },
+        };
+      }),
     };
 
     scriptEl.textContent = JSON.stringify(schemaData);
@@ -287,7 +304,7 @@ export const TechProductsSection: React.FC = () => {
           })}
         </div>
 
-        {/* Product Cards Grid - Product Image, Title, P/N, MAKER */}
+        {/* Product Cards Grid - Product Image, Title, P/N, MAKER with Automated Google Image SEO */}
         {filteredProducts.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8 mb-12">
             {filteredProducts.map((prod) => {
@@ -312,6 +329,13 @@ export const TechProductsSection: React.FC = () => {
                   ? prod.makerCn || prod.maker
                   : prod.maker;
 
+              const spec =
+                language === 'EN'
+                  ? prod.specEn || prod.spec || prod.descriptionEn || prod.description
+                  : language === 'CN'
+                  ? prod.specCn || prod.spec || prod.descriptionCn || prod.description
+                  : prod.spec || prod.description;
+
               const catObj = (productCategories || []).find((c) => c.id === prod.category);
               const categoryLabel =
                 language === 'EN'
@@ -323,105 +347,17 @@ export const TechProductsSection: React.FC = () => {
               const isCopied = copiedId === prod.id;
 
               return (
-                <div
+                <ProductCard
                   key={prod.id}
-                  id={`prod-card-${prod.id}`}
-                  className="bg-white rounded-3xl border border-slate-200/90 shadow-sm hover:shadow-xl hover:border-emerald-300/80 transition-all duration-300 flex flex-col group overflow-hidden"
-                >
-                  {/* Product Image Area - Clean seamless white background */}
-                  <div className="relative h-64 sm:h-72 overflow-hidden bg-white flex items-center justify-center p-6 border-b border-slate-100">
-                    {/* Category Badge on Top-Right */}
-                    {categoryLabel && (
-                      <div className="absolute top-4 right-4 z-20">
-                        <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-extrabold bg-slate-900/90 text-white shadow-sm backdrop-blur-sm border border-white/20 tracking-wide">
-                          {categoryLabel}
-                        </span>
-                      </div>
-                    )}
-
-                    {prod.imageUrl ? (
-                      <>
-                        <img
-                          src={prod.imageUrl}
-                          alt={title}
-                          className="w-full h-full object-contain group-hover:scale-105 transition-transform duration-500 relative z-0"
-                          referrerPolicy="no-referrer"
-                        />
-                        {/* Official BAEKSONG ENG Watermark Overlay */}
-                        <ProductWatermarkOverlay />
-                      </>
-                    ) : (
-                      <div className="flex flex-col items-center justify-center text-slate-300 gap-2">
-                        <Layers className="w-12 h-12 stroke-1 text-slate-300" />
-                        <span className="text-xs text-slate-400 font-medium">사용자 이미지 업로드 필요</span>
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Card Content - Title, P/N, MAKER */}
-                  <div className="p-6 text-left flex flex-col flex-1 justify-between bg-white">
-                    <div>
-                      <div className="flex items-start justify-between gap-2 mb-3">
-                        <h3 className="text-lg sm:text-xl font-extrabold text-slate-900 group-hover:text-emerald-600 transition-colors leading-snug font-tech-heading tracking-tight">
-                          {title}
-                        </h3>
-
-                        {/* Copy Deep Link Button */}
-                        <button
-                          type="button"
-                          id={`copy-link-${prod.id}`}
-                          onClick={() => handleCopyProductLink(pn || title, prod.id)}
-                          className="shrink-0 p-2 rounded-xl text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 transition-colors cursor-pointer border border-transparent hover:border-emerald-200"
-                          title="이 제품 고유 검색 링크 복사"
-                        >
-                          {isCopied ? (
-                            <Check className="w-4 h-4 text-emerald-600" />
-                          ) : (
-                            <Link2 className="w-4 h-4" />
-                          )}
-                        </button>
-                      </div>
-
-                      {isCopied && (
-                        <div className="mb-3 px-3 py-1.5 bg-emerald-50 border border-emerald-200 rounded-lg text-[11px] font-bold text-emerald-800 flex items-center gap-1.5 animate-fade-in">
-                          <Check className="w-3.5 h-3.5 text-emerald-600" />
-                          <span>제품 고유 링크(URL)가 복사되었습니다!</span>
-                        </div>
-                      )}
-                    </div>
-
-                    {(pn || maker) && (
-                      <div className="pt-4 border-t border-slate-100 space-y-2">
-                        {pn && (
-                          <div className="flex items-center justify-between gap-2.5 p-2.5 rounded-2xl bg-slate-900 border border-slate-800/90 shadow-sm group-hover:border-emerald-500/40 transition-colors">
-                            <div className="flex items-center gap-1.5 shrink-0 pl-1">
-                              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
-                              <span className="text-[11px] font-black text-slate-400 uppercase tracking-widest font-mono">
-                                P/N
-                              </span>
-                            </div>
-                            <span
-                              className="font-pn font-bold text-xs sm:text-[13px] text-emerald-300 bg-slate-950/80 px-2.5 py-1 rounded-lg border border-emerald-500/30 truncate max-w-[72%] text-right tracking-wider select-all"
-                              title={pn}
-                            >
-                              {pn}
-                            </span>
-                          </div>
-                        )}
-                        {maker && (
-                          <div className="flex items-center justify-between gap-2.5 px-3 py-2 rounded-xl bg-slate-50 border border-slate-200/80">
-                            <span className="text-[11px] font-bold text-slate-500 shrink-0 uppercase tracking-widest font-mono">
-                              MAKER
-                            </span>
-                            <span className="font-semibold text-slate-800 text-xs sm:text-sm truncate max-w-[70%] text-right">
-                              {maker}
-                            </span>
-                          </div>
-                        )}
-                      </div>
-                    )}
-                  </div>
-                </div>
+                  product={prod}
+                  title={title}
+                  pn={pn}
+                  maker={maker}
+                  spec={spec}
+                  categoryLabel={categoryLabel}
+                  isCopied={isCopied}
+                  onCopyLink={handleCopyProductLink}
+                />
               );
             })}
           </div>

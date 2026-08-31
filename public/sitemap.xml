@@ -1,9 +1,178 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
+        xmlns:image="http://www.google.com/schemas/sitemap-image/1.1">
+
+  <!-- Main Website Entry -->
   <url>
     <loc>https://www.baeksongeng.com/</loc>
-    <lastmod>2026-08-25</lastmod>
-    <changefreq>weekly</changefreq>
+    <lastmod>2026-08-31</lastmod>
+    <changefreq>daily</changefreq>
     <priority>1.0</priority>
+  </url>
+
+  <!-- Main Sections -->
+  <url>
+    <loc>https://www.baeksongeng.com/#products</loc>
+    <lastmod>2026-08-31</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.9</priority>
+  </url>
+  <url>
+    <loc>https://www.baeksongeng.com/#about</loc>
+    <lastmod>2026-08-31</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://www.baeksongeng.com/#equipment</loc>
+    <lastmod>2026-08-31</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://www.baeksongeng.com/#gallery</loc>
+    <lastmod>2026-08-31</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://www.baeksongeng.com/#contact</loc>
+    <lastmod>2026-08-31</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+
+  <!-- Products Dynamic URLs (12 items) -->
+  <url>
+    <loc>https://www.baeksongeng.com/?pn=3D10-101194-12</loc>
+    <lastmod>2026-08-31</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.85</priority>
+    <image:image>
+      <image:loc>https://www.baeksongeng.com/images/3D10-101194-12.jpg</image:loc>
+      <image:title>3D10-101194-12 Shield depo Tokyo Electron 300mm TEL 초정밀 반도체 가공품 백송이엔지</image:title>
+      <image:caption>300mm TEL 초정밀 반도체 가공품 - (주)백송이엔지</image:caption>
+    </image:image>
+  </url>
+  <url>
+    <loc>https://www.baeksongeng.com/?pn=3D10-101152-13</loc>
+    <lastmod>2026-08-31</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.85</priority>
+    <image:image>
+      <image:loc>https://www.baeksongeng.com/images/3D10-101152-13.jpg</image:loc>
+      <image:title>3D10-101152-13 Shutter BTM Tokyo Electron 300mm Shutter BTM 알루미늄 정밀 가공품 백송이엔지</image:title>
+      <image:caption>300mm Shutter BTM 알루미늄 정밀 가공품 - (주)백송이엔지</image:caption>
+    </image:image>
+  </url>
+  <url>
+    <loc>https://www.baeksongeng.com/?pn=3D10-101153-12</loc>
+    <lastmod>2026-08-31</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.85</priority>
+    <image:image>
+      <image:loc>https://www.baeksongeng.com/images/3D10-101153-12.jpg</image:loc>
+      <image:title>3D10-101153-12 Ring BTM shield Tokyo Electron 300mm 반도체 챔버 링 쉴드 백송이엔지</image:title>
+      <image:caption>300mm 반도체 챔버 링 쉴드 - (주)백송이엔지</image:caption>
+    </image:image>
+  </url>
+  <url>
+    <loc>https://www.baeksongeng.com/?pn=3D10-101154-12</loc>
+    <lastmod>2026-08-31</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.85</priority>
+    <image:image>
+      <image:loc>https://www.baeksongeng.com/images/3D10-101154-12.jpg</image:loc>
+      <image:title>3D10-101154-12 Cover shield BTM Tokyo Electron 300mm 하부 커버 쉴드 백송이엔지</image:title>
+      <image:caption>300mm 하부 커버 쉴드 - (주)백송이엔지</image:caption>
+    </image:image>
+  </url>
+  <url>
+    <loc>https://www.baeksongeng.com/?pn=3D10-101195-12</loc>
+    <lastmod>2026-08-31</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.85</priority>
+    <image:image>
+      <image:loc>https://www.baeksongeng.com/images/3D10-101195-12.jpg</image:loc>
+      <image:title>3D10-101195-12 Ring BTM depo Tokyo Electron 300mm TEL 정밀 링 데포 부품 백송이엔지</image:title>
+      <image:caption>300mm TEL 정밀 링 데포 부품 - (주)백송이엔지</image:caption>
+    </image:image>
+  </url>
+  <url>
+    <loc>https://www.baeksongeng.com/?pn=0020-33806</loc>
+    <lastmod>2026-08-31</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.85</priority>
+    <image:image>
+      <image:loc>https://www.baeksongeng.com/images/0020-33806.jpg</image:loc>
+      <image:title>0020-33806 Chamber Lid Plate Applied Materials 200mm/300mm AMAT 챔버 리드 플레이트 하드아노다이징 백송이엔지</image:title>
+      <image:caption>200mm/300mm AMAT 챔버 리드 플레이트 하드아노다이징 - (주)백송이엔지</image:caption>
+    </image:image>
+  </url>
+  <url>
+    <loc>https://www.baeksongeng.com/?pn=0020-34694</loc>
+    <lastmod>2026-08-31</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.85</priority>
+    <image:image>
+      <image:loc>https://www.baeksongeng.com/images/0020-34694.jpg</image:loc>
+      <image:title>0020-34694 DPS Lower Chamber Applied Materials AMAT 식각공정 하부 챔버 라이너 백송이엔지</image:title>
+      <image:caption>AMAT 식각공정 하부 챔버 라이너 - (주)백송이엔지</image:caption>
+    </image:image>
+  </url>
+  <url>
+    <loc>https://www.baeksongeng.com/?pn=0021-09625</loc>
+    <lastmod>2026-08-31</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.85</priority>
+    <image:image>
+      <image:loc>https://www.baeksongeng.com/images/0021-09625.jpg</image:loc>
+      <image:title>0021-09625 Cathode Liner Ring Applied Materials AMAT 플라즈마 캐소드 라이너 링 백송이엔지</image:title>
+      <image:caption>AMAT 플라즈마 캐소드 라이너 링 - (주)백송이엔지</image:caption>
+    </image:image>
+  </url>
+  <url>
+    <loc>https://www.baeksongeng.com/?pn=0020-20412</loc>
+    <lastmod>2026-08-31</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.85</priority>
+    <image:image>
+      <image:loc>https://www.baeksongeng.com/images/0020-20412.jpg</image:loc>
+      <image:title>0020-20412 Slit Valve Door Liner Applied Materials AMAT 진공 슬릿 밸브 도어 라이너 백송이엔지</image:title>
+      <image:caption>AMAT 진공 슬릿 밸브 도어 라이너 - (주)백송이엔지</image:caption>
+    </image:image>
+  </url>
+  <url>
+    <loc>https://www.baeksongeng.com/?pn=0020-76123</loc>
+    <lastmod>2026-08-31</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.85</priority>
+    <image:image>
+      <image:loc>https://www.baeksongeng.com/images/0020-76123.jpg</image:loc>
+      <image:title>0020-76123 Showerhead Gas Diffuser LAM Research LAM 300mm 에칭 챔버 가스 디퓨저 백송이엔지</image:title>
+      <image:caption>LAM 300mm 에칭 챔버 가스 디퓨저 - (주)백송이엔지</image:caption>
+    </image:image>
+  </url>
+  <url>
+    <loc>https://www.baeksongeng.com/?pn=0040-88192</loc>
+    <lastmod>2026-08-31</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.85</priority>
+    <image:image>
+      <image:loc>https://www.baeksongeng.com/images/0040-88192.jpg</image:loc>
+      <image:title>0040-88192 Upper Electrode Plate Tokyo Electron TEL 300mm 상부 전극 플레이트 백송이엔지</image:title>
+      <image:caption>TEL 300mm 상부 전극 플레이트 - (주)백송이엔지</image:caption>
+    </image:image>
+  </url>
+  <url>
+    <loc>https://www.baeksongeng.com/?pn=0020-55410</loc>
+    <lastmod>2026-08-31</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.85</priority>
+    <image:image>
+      <image:loc>https://www.baeksongeng.com/images/0020-55410.jpg</image:loc>
+      <image:title>0020-55410 Heater Pedestal Ring Applied Materials AMAT 웨이퍼 히터 페디스탈 링 백송이엔지</image:title>
+      <image:caption>AMAT 웨이퍼 히터 페디스탈 링 - (주)백송이엔지</image:caption>
+    </image:image>
   </url>
 </urlset>

@@ -143,15 +143,21 @@ async function startServer() {
     if (fs.existsSync(filePath)) {
       return res.sendFile(filePath);
     }
-    return res.send(`<?xml version="1.0" encoding="UTF-8"?>
+
+    try {
+      const { generateSitemapXml } = require("./scripts/generate-sitemap");
+      return res.send(generateSitemapXml());
+    } catch {
+      return res.send(`<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
     <loc>https://www.baeksongeng.com/</loc>
-    <lastmod>2026-08-25</lastmod>
-    <changefreq>weekly</changefreq>
+    <lastmod>${new Date().toISOString().split('T')[0]}</lastmod>
+    <changefreq>daily</changefreq>
     <priority>1.0</priority>
   </url>
 </urlset>`);
+    }
   });
 
   // API route for AI Translation using Gemini 3.6 Flash

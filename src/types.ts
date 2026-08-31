@@ -103,6 +103,9 @@ export interface Product {
   maker?: string;
   makerEn?: string;
   makerCn?: string;
+  spec?: string;
+  specEn?: string;
+  specCn?: string;
   description?: string;
   descriptionEn?: string;
   descriptionCn?: string;
