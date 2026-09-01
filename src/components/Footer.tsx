@@ -42,50 +42,76 @@ export const Footer: React.FC = () => {
           </div>
 
           {/* Col 2: Quick Links */}
+          {/* Col 2: Quick Links for Search Engine Sitelinks & Visitors */}
           <div className="lg:col-span-2 space-y-3">
             <h4 className="text-sm font-bold text-white uppercase tracking-wider">
               {language === 'EN' ? 'Quick Links' : language === 'CN' ? '快速导航' : '주요 바로가기'}
             </h4>
             <ul className="space-y-2 text-xs">
               <li>
-                <button
-                  onClick={() => handleNavClick('about')}
-                  className="hover:text-emerald-400 transition-colors"
+                <a
+                  href="#about"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    handleNavClick('about');
+                    window.location.hash = '#about';
+                  }}
+                  className="hover:text-emerald-400 transition-colors inline-block"
                 >
                   {t.nav.about}
-                </button>
+                </a>
               </li>
               <li>
-                <button
-                  onClick={() => handleNavClick('orgchart')}
-                  className="hover:text-emerald-400 transition-colors"
+                <a
+                  href="#orgchart"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    handleNavClick('orgchart');
+                    window.location.hash = '#orgchart';
+                  }}
+                  className="hover:text-emerald-400 transition-colors inline-block"
                 >
                   {t.nav.orgchart}
-                </button>
+                </a>
               </li>
               <li>
-                <button
-                  onClick={() => handleNavClick('equipment')}
-                  className="hover:text-emerald-400 transition-colors"
+                <a
+                  href="#equipment"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    handleNavClick('equipment');
+                    window.location.hash = '#equipment';
+                  }}
+                  className="hover:text-emerald-400 transition-colors inline-block"
                 >
                   {t.nav.equipment}
-                </button>
+                </a>
               </li>
               <li>
-                <button
-                  onClick={() => handleNavClick('products')}
-                  className="hover:text-emerald-400 transition-colors"
+                <a
+                  href="#products"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    handleNavClick('products');
+                    window.location.hash = '#products';
+                  }}
+                  className="hover:text-emerald-400 transition-colors inline-block"
                 >
                   {t.nav.products}
-                </button>
+                </a>
               </li>
               <li>
-                <button
-                  onClick={() => handleNavClick('contact')}
-                  className="hover:text-emerald-400 transition-colors"
+                <a
+                  href="#contact"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    handleNavClick('contact');
+                    window.location.hash = '#contact';
+                  }}
+                  className="hover:text-emerald-400 transition-colors inline-block"
                 >
                   {t.nav.contact}
-                </button>
+                </a>
               </li>
             </ul>
           </div>

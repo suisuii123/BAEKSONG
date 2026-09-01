@@ -47,8 +47,11 @@ export const Header: React.FC = () => {
     { id: 'contact', label: t.nav.contact },
   ];
 
-  const handleNavClick = (id: string) => {
-    setActiveNav(id === 'home' ? 'about' : id);
+  const handleNavClick = (id: string, e?: React.MouseEvent) => {
+    if (e) e.preventDefault();
+    const targetNav = id === 'home' ? 'about' : id;
+    setActiveNav(targetNav);
+    window.location.hash = `#${targetNav}`;
     setMobileMenuOpen(false);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
@@ -80,22 +83,23 @@ export const Header: React.FC = () => {
           </button>
 
           {/* Desktop Nav (Displayed on md: 768px and above) */}
-          <nav className="hidden md:flex items-center gap-0.5 lg:gap-1 bg-slate-100/90 p-1 lg:p-1.5 rounded-full border border-slate-200/80 backdrop-blur-md">
+          <nav aria-label="메인 메뉴" className="hidden md:flex items-center gap-0.5 lg:gap-1 bg-slate-100/90 p-1 lg:p-1.5 rounded-full border border-slate-200/80 backdrop-blur-md">
             {navItems.map((item) => {
               const isActive = activeNav === item.id;
               return (
-                <button
+                <a
                   key={item.id}
                   id={`nav-item-${item.id}`}
-                  onClick={() => handleNavClick(item.id)}
-                  className={`px-2.5 lg:px-4 py-1.5 lg:py-2 rounded-full text-xs font-semibold transition-all duration-200 relative whitespace-nowrap ${
+                  href={`#${item.id}`}
+                  onClick={(e) => handleNavClick(item.id, e)}
+                  className={`px-2.5 lg:px-4 py-1.5 lg:py-2 rounded-full text-xs font-semibold transition-all duration-200 relative whitespace-nowrap inline-block ${
                     isActive
                       ? 'bg-[#2BB8A1] text-white shadow-md shadow-teal-900/20'
                       : 'text-slate-600 hover:text-slate-900 hover:bg-white'
                   }`}
                 >
                   {item.label}
-                </button>
+                </a>
               );
             })}
           </nav>
@@ -198,10 +202,11 @@ export const Header: React.FC = () => {
         <div className="lg:hidden fixed inset-x-0 top-[72px] bg-white/95 backdrop-blur-2xl border-b border-slate-200 p-6 shadow-xl transition-all">
           <div className="flex flex-col gap-3">
             {navItems.map((item) => (
-              <button
+              <a
                 key={item.id}
                 id={`mobile-nav-${item.id}`}
-                onClick={() => handleNavClick(item.id)}
+                href={`#${item.id}`}
+                onClick={(e) => handleNavClick(item.id, e)}
                 className={`flex items-center justify-between p-3.5 rounded-xl text-sm font-semibold transition-all ${
                   activeNav === item.id
                     ? 'bg-emerald-50 text-emerald-800 border border-emerald-200'
@@ -210,7 +215,7 @@ export const Header: React.FC = () => {
               >
                 <span>{item.label}</span>
                 <ChevronRight className="w-4 h-4 opacity-50" />
-              </button>
+              </a>
             ))}
 
             <div className="pt-4 border-t border-slate-200 flex flex-col gap-2.5">

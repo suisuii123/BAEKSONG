@@ -32,12 +32,12 @@ export function generateSitemapXml(): string {
   xml += `    <priority>1.0</priority>\n`;
   xml += `  </url>\n\n`;
 
-  // 2. 주요 섹션 바로가기 URL
+  // 2. 주요 섹션 바로가기 URL (Sitelinks 대응: 회사소개, 조직도, 설비현황, 제품, 찾아오시는길)
   const sections = [
-    { path: '/#products', priority: '0.9', changefreq: 'daily' },
-    { path: '/#about', priority: '0.8', changefreq: 'monthly' },
+    { path: '/#about', priority: '0.9', changefreq: 'weekly' },
+    { path: '/#orgchart', priority: '0.8', changefreq: 'monthly' },
     { path: '/#equipment', priority: '0.8', changefreq: 'monthly' },
-    { path: '/#gallery', priority: '0.7', changefreq: 'weekly' },
+    { path: '/#products', priority: '0.9', changefreq: 'daily' },
     { path: '/#contact', priority: '0.8', changefreq: 'monthly' },
   ];
 

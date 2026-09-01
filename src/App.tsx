@@ -15,28 +15,56 @@ import { AdminDashboardModal } from './components/admin/AdminDashboardModal';
 import { DevCmsButton } from './components/DevCmsButton';
 
 function MainContent() {
-  const { activeNav } = useCMS();
+  const { activeNav, setActiveNav } = useCMS();
 
   useEffect(() => {
-    document.title = '(주)백송이엔지';
-  }, []);
+    document.title = '백송이엔지 | (주)백송이엔지 - 반도체 장비 메탈 부품 정밀가공';
+
+    // Handle URL Hash navigation for Direct Deep Links and Search Engine Sitelinks
+    const syncNavWithHash = () => {
+      const hash = window.location.hash.replace('#', '').toLowerCase();
+      if (['about', 'orgchart', 'equipment', 'products', 'contact'].includes(hash)) {
+        setActiveNav(hash);
+      }
+    };
+
+    syncNavWithHash();
+    window.addEventListener('hashchange', syncNavWithHash);
+    return () => window.removeEventListener('hashchange', syncNavWithHash);
+  }, [setActiveNav]);
 
   return (
-    <main className="pt-20">
+    <main id="main-content" className="pt-20">
       {(activeNav === 'about' || activeNav === 'home' || !activeNav) && (
-        <>
+        <section id="about-section">
           <Hero />
           <AboutSection />
-        </>
+        </section>
       )}
 
-      {activeNav === 'orgchart' && <OrgChartSection />}
+      {activeNav === 'orgchart' && (
+        <section id="orgchart-section">
+          <OrgChartSection />
+        </section>
+      )}
 
-      {activeNav === 'equipment' && <EquipmentSection />}
+      {activeNav === 'equipment' && (
+        <section id="equipment-section">
+          <EquipmentSection />
+        </section>
+      )}
 
-      {activeNav === 'products' && <TechProductsSection />}
+      {activeNav === 'products' && (
+        <section id="products-section">
+          <TechProductsSection />
+        </section>
+      )}
 
-      {activeNav === 'contact' && <ContactSection />}
+      {activeNav === 'contact' && (
+        <section id="contact-section">
+          <ContactSection />
+        </section>
+      )}
     </main>
   );
 }

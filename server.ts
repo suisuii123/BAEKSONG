@@ -121,7 +121,7 @@ async function startServer() {
     }
   });
 
-  // Explicit Search Engine Crawler Routes (robots.txt & sitemap.xml)
+  // Explicit Search Engine Crawler Routes (robots.txt & sitemap.xml & favicons)
   app.get("/robots.txt", (req, res) => {
     const publicRobots = path.join(process.cwd(), "public", "robots.txt");
     const distRobots = path.join(process.cwd(), "dist", "robots.txt");
@@ -132,6 +132,29 @@ async function startServer() {
       return res.sendFile(filePath);
     }
     return res.send(`User-agent: *\nAllow: /\n\nHost: https://www.baeksongeng.com\nSitemap: https://www.baeksongeng.com/sitemap.xml\n`);
+  });
+
+  // Dedicated Route for Google / Naver Favicon Bot (/favicon.ico, /favicon-48x48.png, etc.)
+  app.get(["/favicon.ico", "/favicon.png", "/favicon-48x48.png", "/favicon-32x32.png", "/favicon-16x16.png", "/apple-touch-icon.png", "/android-chrome-192x192.png", "/android-chrome-512x512.png", "/site.webmanifest"], (req, res) => {
+    const iconName = req.path.replace(/^\//, '');
+    const publicIcon = path.join(process.cwd(), "public", iconName);
+    const distIcon = path.join(process.cwd(), "dist", iconName);
+    const filePath = fs.existsSync(publicIcon) ? publicIcon : distIcon;
+
+    if (fs.existsSync(filePath)) {
+      if (iconName.endsWith('.ico')) {
+        res.setHeader("Content-Type", "image/x-icon");
+      } else if (iconName.endsWith('.png')) {
+        res.setHeader("Content-Type", "image/png");
+      } else if (iconName.endsWith('.svg')) {
+        res.setHeader("Content-Type", "image/svg+xml");
+      } else if (iconName.endsWith('.webmanifest')) {
+        res.setHeader("Content-Type", "application/manifest+json");
+      }
+      res.setHeader("Cache-Control", "public, max-age=86400");
+      return res.sendFile(filePath);
+    }
+    return res.status(404).end();
   });
 
   app.get("/sitemap.xml", (req, res) => {

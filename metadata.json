@@ -1,6 +1,6 @@
 {
   "name": "(주)백송이엔지",
-  "description": "반도체 장비 메탈 부품 초정밀 가공 전문기업 (주)백송이엔지 공식 기업 웹사이트 & CMS 시스템",
+  "description": "반도체장비메탈부품 정밀가공전문기업",
   "requestFramePermissions": [],
   "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
 }
