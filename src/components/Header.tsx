@@ -9,7 +9,6 @@ import {
   Settings,
   Mail,
   PhoneCall,
-  Share2,
   ChevronRight,
   Globe,
 } from 'lucide-react';
@@ -19,7 +18,6 @@ export const Header: React.FC = () => {
     companyInfo,
     setIsAdminOpen,
     setIsQuoteModalOpen,
-    setIsSeoModalOpen,
     activeNav,
     setActiveNav,
   } = useCMS();
@@ -130,16 +128,6 @@ export const Header: React.FC = () => {
                 );
               })}
             </div>
-
-            {/* Quick SEO / OG Info modal trigger */}
-            <button
-              id="header-seo-btn"
-              onClick={() => setIsSeoModalOpen(true)}
-              className="hidden lg:flex p-2.5 rounded-xl bg-slate-100 hover:bg-slate-200/80 text-slate-700 border border-slate-200 transition-all text-xs items-center gap-1.5 cursor-pointer"
-              title="SEO & 소셜 미디어 메타데이터"
-            >
-              <Share2 className="w-4 h-4 text-[#2BB8A1]" />
-            </button>
 
             {/* AI Studio Only: Quick CMS Header Button (Hidden on Live Production Domain) */}
             {isDevMode && (
