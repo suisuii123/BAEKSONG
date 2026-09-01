@@ -31,21 +31,38 @@ export const SEOPreviewModal: React.FC = () => {
           구글/네이버 검색 노출 및 카카오톡, 링크드인 링크 공유 시 표시되는 미디어 프리뷰 카드입니다.
         </p>
 
-        {/* Google Search Result Preview */}
+        {/* Naver & Google Search Result Preview */}
         <div className="mb-6 p-5 rounded-2xl bg-slate-50 border border-slate-200">
-          <div className="flex items-center gap-2 text-xs text-slate-500 mb-1.5">
-            <img src="/favicon.png" alt="Baeksong Favicon" className="w-5 h-5 rounded-md object-contain border border-slate-200 shadow-sm" />
-            <div className="flex flex-col">
-              <span className="font-semibold text-slate-800 text-xs">baeksongeng.com</span>
-              <span className="font-mono text-[10px] text-slate-400">https://baeksongeng.com</span>
-            </div>
+          <div className="flex items-center justify-between mb-3">
+            <span className="text-xs font-bold text-emerald-700 flex items-center gap-1.5">
+              <Search className="w-4 h-4" />
+              네이버(NAVER) & 구글(Google) 검색결과 실시간 프리뷰
+            </span>
+            <span className="text-[10px] bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded font-mono font-bold">
+              웹사이트 상위 랭킹 최적화
+            </span>
           </div>
-          <h4 className="text-base font-bold text-blue-700 hover:underline cursor-pointer">
-            {t.companyName} | 반도체 장비 메탈 부품 초정밀 가공 전문기업
-          </h4>
-          <p className="text-xs text-slate-600 mt-1 leading-relaxed">
-            {companyInfo.description} 5축 머시닝센터, ZEISS 3D CMM 정밀 측정, Class 1000 클린룸 세척 포장.
-          </p>
+
+          <div className="p-4 bg-white rounded-xl border border-slate-200 shadow-sm space-y-1.5">
+            <div className="flex items-center gap-2 text-xs text-slate-500">
+              <img src="/favicon.png" alt="백송로고" className="w-5 h-5 rounded-md object-contain border border-teal-100 shadow-xs" />
+              <div className="flex items-center gap-1.5">
+                <span className="font-semibold text-slate-800 text-xs">baeksongeng.com</span>
+                <span className="text-slate-300">·</span>
+                <span className="text-slate-500 text-xs font-medium">백송이엔지</span>
+              </div>
+            </div>
+            <h4 className="text-base font-bold text-[#0034a0] hover:underline cursor-pointer">
+              백송이엔지 | (주)백송이엔지 - 반도체 장비 메탈 부품 정밀가공
+            </h4>
+            <p className="text-xs text-slate-600 leading-relaxed">
+              백송이엔지 / (주)백송이엔지(BAEKSONG ENG) 공식 웹사이트. 반도체 및 디스플레이 장비 핵심 메탈 부품(Chamber, Plate, Lid 등) 초정밀 5축 MCT 가공, 3D CMM 품질보증 및 아노다이징 표면처리 전문 제조기업.
+            </p>
+          </div>
+          <div className="mt-3 text-[11px] text-slate-500 flex items-center gap-1.5 bg-emerald-50/60 p-2.5 rounded-lg border border-emerald-100/80">
+            <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+            <span><strong>'백송이엔지'</strong> 및 <strong>'(주)백송이엔지'</strong> 2가지 검색어 모두 완벽 매칭되도록 메타태그와 구조화 데이터가 최적화되었습니다.</span>
+          </div>
         </div>
 
         {/* Social Media Open Graph Card Preview */}

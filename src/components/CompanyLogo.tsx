@@ -9,7 +9,7 @@ interface CompanyLogoProps {
 }
 
 /**
- * (주)백송이엔지 공식 브랜드 BSG 엠블럼 로고 SVG 컴포넌트
+ * (주)백송이엔지 공식 브랜드 백송 로고 SVG 컴포넌트
  * 2BB8A1 민트 틸(Teal) 브랜드 색상
  */
 export const CompanyLogoSymbol: React.FC<{ size?: number; className?: string }> = ({
@@ -20,48 +20,71 @@ export const CompanyLogoSymbol: React.FC<{ size?: number; className?: string }> 
     <svg
       width={size}
       height={size}
-      viewBox="0 0 200 200"
+      viewBox="0 0 512 512"
       fill="none"
       xmlns="http://www.w3.org/2000/svg"
-      className={`shrink-0 rounded-xl overflow-hidden shadow-md shadow-teal-900/20 ${className}`}
+      className={`shrink-0 rounded-2xl overflow-hidden shadow-md shadow-teal-900/20 ${className}`}
     >
       <defs>
         <linearGradient id="logoBrandGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-          <stop offset="0%" stopColor="#2BB8A1" />
-          <stop offset="100%" stopColor="#229E8A" />
+          <stop offset="0%" stopColor="#2EC4B6" />
+          <stop offset="50%" stopColor="#2BB8A1" />
+          <stop offset="100%" stopColor="#1E9B87" />
         </linearGradient>
       </defs>
 
-      {/* Brand Mint Teal Background Badge */}
-      <rect width="200" height="200" fill="url(#logoBrandGrad)" rx="36" />
-      
-      {/* Circular Emblem Frame */}
-      <circle cx="100" cy="100" r="76" stroke="white" strokeWidth="11" fill="none" />
-      
-      {/* Horizontal Split Cuts for S-G Interlock */}
-      <rect x="18" y="93" width="34" height="14" fill="#2BB8A1" />
-      <rect x="148" y="93" width="34" height="14" fill="#229E8A" />
+      {/* 1. Squircle Badge */}
+      <rect width="512" height="512" rx="118" fill="url(#logoBrandGrad)" />
 
-      {/* S-G Curve Ends */}
+      {/* 2. Top-Right Arc & Arrow Head (Clockwise) */}
       <path
-        d="M 50 128 L 24 128 L 24 93 Z"
-        fill="white"
+        d="M 87 236 A 176 176 0 0 1 425 180"
+        fill="none"
+        stroke="#FFFFFF"
+        strokeWidth="26"
+        strokeLinecap="round"
       />
-      <path
-        d="M 150 72 L 176 72 L 176 107 Z"
-        fill="white"
+      <polygon
+        points="425,272 462,176 366,192"
+        fill="#FFFFFF"
       />
 
-      {/* Center Stylized 'B' Character */}
+      {/* 3. Bottom-Left Arc & Arrow Head (Clockwise) */}
       <path
-        d="M 75 48 C 75 48 84 48 108 48 C 128 48 138 58 138 71 C 138 82 128 89 116 92 C 132 95 142 104 142 120 C 142 138 127 152 102 152 C 82 152 75 152 75 152 L 75 48 Z M 92 64 L 92 88 L 105 88 C 117 88 122 83 122 76 C 122 69 116 64 105 64 L 92 64 Z M 92 103 L 92 136 L 107 136 C 119 136 125 129 125 120 C 125 110 118 103 106 103 L 92 103 Z"
-        fill="white"
+        d="M 425 276 A 176 176 0 0 1 87 332"
+        fill="none"
+        stroke="#FFFFFF"
+        strokeWidth="26"
+        strokeLinecap="round"
       />
-      
-      {/* Serif flourish accent on top left of B */}
+      <polygon
+        points="87,240 50,336 146,320"
+        fill="#FFFFFF"
+      />
+
+      {/* 4. Center Bold 'B' Character */}
       <path
-        d="M 60 48 C 65 48 72 45 75 40 L 75 52 Z"
-        fill="white"
+        d="M 196 138
+           L 278 138
+           C 328 138 358 158 358 194
+           C 358 219 340 238 316 246
+           C 348 254 368 276 368 312
+           C 368 356 332 374 274 374
+           L 196 374
+           Z
+           M 246 182
+           L 246 234
+           L 274 234
+           C 298 234 310 224 310 208
+           C 310 192 298 182 274 182
+           Z
+           M 246 276
+           L 246 332
+           L 278 332
+           C 304 332 318 322 318 304
+           C 318 286 304 276 278 276
+           Z"
+        fill="#FFFFFF"
       />
     </svg>
   );
