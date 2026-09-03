@@ -117,73 +117,30 @@ export const AdminDashboardModal: React.FC = () => {
     options?: { watermark?: boolean; folder?: string }
   ) => {
     if (!file) return;
-    showToast('사진 처리 및 구글 클라우드 스토리지 업로드 중...');
+    showToast('사진 업로드 중...');
+
+    const folder = options?.folder || (activeTab === 'factory' ? 'factory_photos' : activeTab === 'products' ? 'products' : activeTab === 'equipment' ? 'equipment_photos' : 'cms_uploads');
 
     const reader = new FileReader();
-    reader.onload = (e) => {
-      if (e.target?.result && typeof e.target.result === 'string') {
-        const rawDataUrl = e.target.result;
-        const img = new Image();
-        img.onload = async () => {
-          try {
-            const canvas = document.createElement('canvas');
-            const MAX_WIDTH = 1200;
-            const MAX_HEIGHT = 1200;
-            let width = img.width;
-            let height = img.height;
-
-            if (width > height) {
-              if (width > MAX_WIDTH) {
-                height = Math.round((height * MAX_WIDTH) / width);
-                width = MAX_WIDTH;
-              }
-            } else {
-              if (height > MAX_HEIGHT) {
-                width = Math.round((width * MAX_HEIGHT) / height);
-                height = MAX_HEIGHT;
-              }
-            }
-
-            canvas.width = width;
-            canvas.height = height;
-
-            const ctx = canvas.getContext('2d');
-            let processedDataUrl = rawDataUrl;
-            if (ctx) {
-              ctx.drawImage(img, 0, 0, width, height);
-              // Preserve transparent PNGs or encode clean high-quality JPEG
-              const mimeType = file.type === 'image/png' ? 'image/png' : 'image/jpeg';
-              processedDataUrl = canvas.toDataURL(mimeType, 0.95);
-            }
-
-            // Determine destination folder
-            const folder = options?.folder || (activeTab === 'factory' ? 'factory_photos' : activeTab === 'products' ? 'products' : 'cms_uploads');
-
-            // Attempt upload directly to Firebase Cloud Storage
-            const uploadResult = await uploadImageToStorage(processedDataUrl, folder);
-
-            if (uploadResult.isCloudStorage && uploadResult.url) {
-              callback(uploadResult.url);
-              showToast('구글 클라우드 스토리지(pro-axis-wdw25)에 영구 업로드 완료되었습니다.');
-            } else {
-              // Fallback to data URL
-              callback(processedDataUrl);
-              if (uploadResult.error && (uploadResult.error.toLowerCase().includes('permission') || uploadResult.error.toLowerCase().includes('unauthorized') || uploadResult.error.includes('403'))) {
-                showToast('Firebase Storage 규칙을 allow read, write: if true; 로 설정해주세요. (현재 로컬/Firestore 저장됨)');
-              } else {
-                showToast('사진이 안전하게 등록되었습니다.');
-              }
-            }
-          } catch (err) {
-            console.error('Image processing or upload error:', err);
-            callback(rawDataUrl);
-          }
-        };
-        img.onerror = () => {
+    reader.onload = async (e) => {
+      const rawDataUrl = typeof e.target?.result === 'string' ? e.target.result : '';
+      try {
+        // Upload user's exact file without any distortion or lossy conversion
+        const uploadResult = await uploadImageToStorage(file, folder);
+        if (uploadResult.isCloudStorage && uploadResult.url) {
+          callback(uploadResult.url);
+          showToast('구글 클라우드 스토리지(pro-axis-wdw25)에 원본 사진이 영구 업로드되었습니다.');
+        } else if (rawDataUrl) {
           callback(rawDataUrl);
-        };
-        img.src = rawDataUrl;
+          showToast('사진이 안전하게 등록되었습니다.');
+        }
+      } catch (err) {
+        console.error('Image upload error:', err);
+        if (rawDataUrl) callback(rawDataUrl);
       }
+    };
+    reader.onerror = () => {
+      showToast('파일 읽기 오류가 발생했습니다.');
     };
     reader.readAsDataURL(file);
   };
@@ -3361,19 +3318,25 @@ export const AdminDashboardModal: React.FC = () => {
                         </div>
 
                         {/* Image Change */}
-                        <div className="p-3 bg-white rounded-xl border border-purple-200 flex items-center gap-3">
-                          {(editingEqData.imageUrl || eq.imageUrl) ? (
-                            <img
-                              src={editingEqData.imageUrl || eq.imageUrl}
-                              alt={eq.name}
-                              className="w-16 h-12 object-contain bg-slate-50 border rounded-lg shrink-0"
-                            />
-                          ) : (
-                            <div className="w-16 h-12 bg-slate-100 border rounded-lg shrink-0 flex items-center justify-center text-[9px] text-slate-400">
-                              No Img
+                        <div className="p-3 bg-white rounded-xl border border-purple-200 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+                          <div className="flex items-center gap-3">
+                            {(editingEqData.imageUrl || eq.imageUrl) ? (
+                              <img
+                                src={editingEqData.imageUrl || eq.imageUrl}
+                                alt={eq.name}
+                                className="w-20 h-14 object-contain bg-slate-50 border border-slate-200 rounded-lg shrink-0 p-1"
+                              />
+                            ) : (
+                              <div className="w-20 h-14 bg-slate-100 border rounded-lg shrink-0 flex items-center justify-center text-[9px] text-slate-400">
+                                No Img
+                              </div>
+                            )}
+                            <div className="text-[11px] text-slate-500">
+                              <p className="font-semibold text-slate-700">설비 실물/카탈로그 사진</p>
+                              <p className="text-[10px] text-slate-500">선택하신 원본 이미지 파일이 그대로 보존 및 등록됩니다.</p>
                             </div>
-                          )}
-                          <label className="px-3 py-1.5 bg-purple-100 hover:bg-purple-200 text-purple-900 font-bold text-xs rounded-xl cursor-pointer">
+                          </div>
+                          <label className="px-3 py-1.5 bg-purple-100 hover:bg-purple-200 text-purple-900 font-bold text-xs rounded-xl cursor-pointer shrink-0">
                             <span>사진 파일 변경</span>
                             <input
                               type="file"
@@ -3422,7 +3385,7 @@ export const AdminDashboardModal: React.FC = () => {
                           <img
                             src={eq.imageUrl}
                             alt={eq.name}
-                            className="w-16 h-14 object-contain bg-slate-50 p-1 rounded-xl border shrink-0"
+                            className="w-16 h-14 object-contain bg-slate-50 p-1 rounded-xl border border-slate-100 shrink-0"
                             referrerPolicy="no-referrer"
                           />
                         ) : (
