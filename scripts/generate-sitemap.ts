@@ -2,22 +2,75 @@
  * ============================================================================
  * [Sitemap.xml Generator Script]
  * ----------------------------------------------------------------------------
- * products 배열을 읽어 Google, Naver, Bing 검색엔진 표준 sitemap.xml 파일을
- * /public/sitemap.xml 에 자동으로 생성 및 갱신하는 스크립트입니다.
+ * CMS 데이터(data/cms_persistent_data.json) 및 products 기본 데이터를 통합하여
+ * Google, Naver, Bing 검색엔진 표준 sitemap.xml 파일을
+ * /public/sitemap.xml 및 /dist/sitemap.xml 에 자동으로 생성 및 갱신하는 스크립트입니다.
  * 
- * 실행 방법:
- * npx tsx scripts/generate-sitemap.ts
+ * 구글 이미지 검색(Google Image Search) 전용 확장 규격(<image:image>)을
+ * 모든 제품(40+개 품목, 예: 0021-36743)에 완벽하게 자동 연결합니다.
  * ============================================================================
  */
 
 import * as fs from 'fs';
 import * as path from 'path';
-import { products, getProductImageSrc, getProductImageAlt } from '../src/data/products';
+import { products, getProductImageSrc, getProductImageAlt, ProductItem } from '../src/data/products';
 
 const BASE_URL = 'https://www.baeksongeng.com';
 const TODAY = new Date().toISOString().split('T')[0];
 
+interface SitemapProduct {
+  pn: string;
+  name: string;
+  maker?: string;
+  spec?: string;
+  imageUrl?: string;
+}
+
+function getAllProducts(): SitemapProduct[] {
+  const list: SitemapProduct[] = [];
+  const seen = new Set<string>();
+
+  // 1. CMS 영구 데이터 파일에서 전체 최신 제품 로드
+  try {
+    const cmsPath = path.resolve(process.cwd(), 'data', 'cms_persistent_data.json');
+    if (fs.existsSync(cmsPath)) {
+      const raw = fs.readFileSync(cmsPath, 'utf-8');
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed.products)) {
+        for (const item of parsed.products) {
+          const partNo = (item.pn || item.pl || item.pnEn || item.pnCn || '').trim();
+          if (partNo && !seen.has(partNo)) {
+            seen.add(partNo);
+            list.push({
+              pn: partNo,
+              name: item.title || item.titleEn || item.name || partNo,
+              maker: item.maker || item.makerEn || 'Applied Materials',
+              spec: item.spec || item.description || item.categoryName || '반도체 장비 메탈 정밀가공 부품',
+              imageUrl: item.imageUrl || '',
+            });
+          }
+        }
+      }
+    }
+  } catch (err) {
+    console.warn('[SEO] Failed to parse CMS persistent data:', err);
+  }
+
+  // 2. static products 데이터와 병합
+  for (const item of products) {
+    const partNo = (item.pn || '').trim();
+    if (partNo && !seen.has(partNo)) {
+      seen.add(partNo);
+      list.push(item);
+    }
+  }
+
+  return list;
+}
+
 export function generateSitemapXml(): string {
+  const allProducts = getAllProducts();
+
   // XML 헤더 및 네임스페이스 정의 (기본 sitemap 0.9 + 구글 이미지 확장 네임스페이스)
   let xml = `<?xml version="1.0" encoding="UTF-8"?>\n`;
   xml += `<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"\n`;
@@ -52,11 +105,10 @@ export function generateSitemapXml(): string {
   });
   xml += `\n`;
 
-  // 3. 제품(products) 배열 기반 각 제품 상세 URL (https://www.baeksongeng.com/?pn=부품번호) 및 구글 이미지 SEO URL 자동 반복 생성
-  xml += `  <!-- Products Dynamic URLs (${products.length} items) -->\n`;
-  products.forEach((product) => {
+  // 3. 전체 제품 기반 상세 URL (?pn=부품번호) 및 구글 이미지 SEO URL 자동 생성
+  xml += `  <!-- Products Dynamic URLs (${allProducts.length} items) -->\n`;
+  allProducts.forEach((product) => {
     const pnEncoded = encodeURIComponent(product.pn);
-    // 제품 상세 URL: https://www.baeksongeng.com/?pn=부품번호
     const productUrl = `${BASE_URL}/?pn=${pnEncoded}`;
     const rawImgSrc = getProductImageSrc(product);
     const fullImgUrl = rawImgSrc.startsWith('http')
@@ -103,10 +155,16 @@ function escapeXml(unsafe: string): string {
 // 직접 스크립트 실행 시 파일 생성
 function run() {
   const sitemapContent = generateSitemapXml();
-  const outputPath = path.resolve(process.cwd(), 'public', 'sitemap.xml');
-  fs.writeFileSync(outputPath, sitemapContent, 'utf-8');
-  console.log(`[SEO] sitemap.xml generated successfully at ${outputPath}`);
-  console.log(`[SEO] Total ${products.length} products included with Google Image SEO tags.`);
+  const publicPath = path.resolve(process.cwd(), 'public', 'sitemap.xml');
+  fs.writeFileSync(publicPath, sitemapContent, 'utf-8');
+  console.log(`[SEO] sitemap.xml generated successfully at ${publicPath}`);
+
+  const distDir = path.resolve(process.cwd(), 'dist');
+  if (fs.existsSync(distDir)) {
+    const distPath = path.resolve(distDir, 'sitemap.xml');
+    fs.writeFileSync(distPath, sitemapContent, 'utf-8');
+    console.log(`[SEO] sitemap.xml copied to ${distPath}`);
+  }
 }
 
 run();

@@ -30,6 +30,7 @@ export interface Translations {
     metric1Desc: string;
     metric2Label: string;
     metric2Desc: string;
+    metric3Value: string;
     metric3Label: string;
     metric3Desc: string;
     metric4Label: string;
@@ -172,6 +173,7 @@ export const translations: Record<Language, Translations> = {
       metric1Desc: 'Micron(㎛) 단위 한계 극복 공차',
       metric2Label: 'Since 2013',
       metric2Desc: '반도체 부품 초정밀 가공 노하우',
+      metric3Value: '10+ Units',
       metric3Label: 'CNC / CMM Machine',
       metric3Desc: 'DOOSAN 고속 MCT & ZEISS 3D CMM 설비',
       metric4Label: 'Quality Assurance',
@@ -312,6 +314,7 @@ export const translations: Record<Language, Translations> = {
       metric1Desc: 'Breakthrough tolerance at Micron(㎛) scale',
       metric2Label: 'Since 2013',
       metric2Desc: 'Decades of semiconductor machining expertise',
+      metric3Value: '10+ Units',
       metric3Label: 'CNC / CMM Machine',
       metric3Desc: 'DOOSAN High-Speed MCT & ZEISS 3D CMM',
       metric4Label: 'Quality Assurance',
@@ -452,6 +455,7 @@ export const translations: Record<Language, Translations> = {
       metric1Desc: '突破微米(㎛)极限公差',
       metric2Label: 'Since 2013',
       metric2Desc: '多年半导体零部件加工经验',
+      metric3Value: '10+ 台',
       metric3Label: 'CNC / CMM Machine',
       metric3Desc: '斗山(DOOSAN)高速MCT与蔡司3D测量仪',
       metric4Label: 'Quality Assurance',

@@ -278,7 +278,43 @@ Return JSON only in this format:
     const distPath = path.join(process.cwd(), 'dist');
     app.use(express.static(distPath));
     app.get('*', (req, res) => {
-      res.sendFile(path.join(distPath, 'index.html'));
+      const pnQuery = (req.query.pn || req.query.search || req.query.q) as string;
+      const indexPath = path.join(distPath, 'index.html');
+      if (pnQuery && fs.existsSync(indexPath)) {
+        try {
+          const cmsPath = path.join(process.cwd(), 'data', 'cms_persistent_data.json');
+          if (fs.existsSync(cmsPath)) {
+            const cms = JSON.parse(fs.readFileSync(cmsPath, 'utf-8'));
+            const normalizedQuery = pnQuery.trim().toLowerCase().replace(/[\s-_]/g, '');
+            const prod = (cms.products || []).find((p: any) => {
+              const p1 = (p.pn || '').toLowerCase().replace(/[\s-_]/g, '');
+              const p2 = (p.pl || '').toLowerCase().replace(/[\s-_]/g, '');
+              const p3 = (p.pnEn || '').toLowerCase().replace(/[\s-_]/g, '');
+              const p4 = (p.pnCn || '').toLowerCase().replace(/[\s-_]/g, '');
+              return (p1 && p1.includes(normalizedQuery)) || (p2 && p2.includes(normalizedQuery)) || (p3 && p3.includes(normalizedQuery)) || (p4 && p4.includes(normalizedQuery));
+            });
+            if (prod) {
+              let html = fs.readFileSync(indexPath, 'utf-8');
+              const partNo = prod.pn || prod.pl || pnQuery;
+              const title = prod.title || prod.name || partNo;
+              const maker = prod.maker || '';
+              const img = prod.imageUrl || `https://www.baeksongeng.com/images/${partNo}.jpg`;
+              const desc = `${partNo} ${title} (${maker}) - 반도체 장비 메탈 부품 초정밀 가공 전문 (주)백송이엔지`;
+
+              html = html.replace(/<title>.*?<\/title>/, `<title>${partNo} ${title} | (주)백송이엔지</title>`);
+              html = html.replace(/<meta name="description" content=".*?" \/>/, `<meta name="description" content="${desc}" />`);
+              html = html.replace(/<meta property="og:title" content=".*?" \/>/, `<meta property="og:title" content="${partNo} ${title} | (주)백송이엔지" />`);
+              html = html.replace(/<meta property="og:description" content=".*?" \/>/, `<meta property="og:description" content="${desc}" />`);
+              html = html.replace(/<meta property="og:image" content=".*?" \/>/, `<meta property="og:image" content="${img}" />`);
+              html = html.replace(/<meta name="twitter:image" content=".*?" \/>/, `<meta name="twitter:image" content="${img}" />`);
+              return res.send(html);
+            }
+          }
+        } catch (e) {
+          console.warn('[SEO] Failed to inject dynamic product meta tags:', e);
+        }
+      }
+      res.sendFile(indexPath);
     });
   }
 

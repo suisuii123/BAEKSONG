@@ -81,11 +81,11 @@ export const TechProductsSection: React.FC = () => {
           manufacturer: {
             '@type': 'Organization',
             name: '(주)백송이엔지 (BAEKSONG ENG)',
-            url: 'https://www.baeksongeng.co.kr',
+            url: 'https://www.baeksongeng.com',
           },
           offers: {
             '@type': 'Offer',
-            url: `https://www.baeksongeng.co.kr/?pn=${encodeURIComponent(p.pn || p.pl || p.title)}`,
+            url: `https://www.baeksongeng.com/?pn=${encodeURIComponent(p.pn || p.pl || p.title)}`,
             priceCurrency: 'KRW',
             availability: 'https://schema.org/InStock',
             itemCondition: 'https://schema.org/NewCondition',
@@ -194,7 +194,7 @@ export const TechProductsSection: React.FC = () => {
   };
 
   const handleCopyProductLink = (pn: string, id: string) => {
-    const origin = typeof window !== 'undefined' ? window.location.origin : 'https://www.baeksongeng.co.kr';
+    const origin = typeof window !== 'undefined' ? window.location.origin : 'https://www.baeksongeng.com';
     const targetParam = encodeURIComponent(pn || id);
     const link = `${origin}/?pn=${targetParam}`;
 

@@ -93,7 +93,7 @@ export const Hero: React.FC = () => {
     },
     {
       icon: Zap,
-      value: '20+ Units',
+      value: t.hero.metric3Value || (language === 'CN' ? '10+ 台' : '10+ Units'),
       label: t.hero.metric3Label,
       desc: t.hero.metric3Desc,
     },
