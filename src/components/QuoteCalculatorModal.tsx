@@ -71,7 +71,8 @@ export const QuoteCalculatorModal: React.FC = () => {
         category: '도면/요청사항 참조',
         material: '도면/요청사항 참조',
         quantity: '도면/요청사항 참조',
-        drawingFileName: file ? `${file.name} (${(file.size / 1024).toFixed(1)} KB)` : '도면 파일 첨부 없음',
+        drawingFileName: file ? file.name : '도면 파일 첨부 없음',
+        drawingFileUrl: res.drawingUrl || undefined,
         message: `${message || ''}\n[시스템 자동 발송 / 수신처: ${targetEmail}]`,
       });
 

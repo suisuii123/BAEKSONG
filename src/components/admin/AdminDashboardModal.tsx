@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useCMS } from '../../context/CMSContext';
 import { useLanguage } from '../../context/LanguageContext';
 import { Product, Equipment, NewsPost, HistoryItem, Department, Language, HeroSlide, ProductCategory, OrgCeoInfo, OrgQualityInfo, FactoryPhotoItem } from '../../types';
@@ -45,6 +45,13 @@ import {
   ChevronsDown,
   ArrowUpDown,
   Download,
+  ExternalLink,
+  FileText,
+  Mail,
+  CheckCircle2,
+  AlertCircle,
+  KeyRound,
+  Send,
 } from 'lucide-react';
 
 export const AdminDashboardModal: React.FC = () => {
@@ -73,6 +80,7 @@ export const AdminDashboardModal: React.FC = () => {
     deleteNewsPost,
     inquiries,
     updateInquiryStatus,
+    updateInquiryDrawing,
     deleteInquiry,
     historyItems,
     addHistoryItem,
@@ -257,9 +265,92 @@ export const AdminDashboardModal: React.FC = () => {
   const [isTranslating, setIsTranslating] = useState<boolean>(false);
   const [translationNotice, setTranslationNotice] = useState<string | null>(null);
 
-  // System Email Test State
+  // System Email & SMTP Config State
   const [isTestingEmail, setIsTestingEmail] = useState<boolean>(false);
   const [emailTestResult, setEmailTestResult] = useState<{ success: boolean; msg: string } | null>(null);
+  const [smtpUser, setSmtpUser] = useState<string>('baeksong_eng');
+  const [smtpPass, setSmtpPass] = useState<string>('');
+  const [smtpTargetEmail, setSmtpTargetEmail] = useState<string>('baeksong_eng@naver.com');
+  const [isSmtpConfigured, setIsSmtpConfigured] = useState<boolean>(false);
+  const [isSavingSmtp, setIsSavingSmtp] = useState<boolean>(false);
+  const [smtpSaveNotice, setSmtpSaveNotice] = useState<{ success: boolean; msg: string } | null>(null);
+  const [showSmtpSettings, setShowSmtpSettings] = useState<boolean>(true);
+  const [isTestingFormspree, setIsTestingFormspree] = useState<boolean>(false);
+  const [formspreeNotice, setFormspreeNotice] = useState<{ success: boolean; msg: string } | null>(null);
+
+  const handleTestFormspree = async () => {
+    setIsTestingFormspree(true);
+    setFormspreeNotice(null);
+    try {
+      const res = await fetch('/api/test-formspree', { method: 'POST' });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        setFormspreeNotice({ success: true, msg: data.message });
+        showToast('폼스프리 테스트 메일이 네이버 메일함으로 발송되었습니다.');
+      } else {
+        setFormspreeNotice({ success: false, msg: data.message || '폼스프리 발송 실패' });
+      }
+    } catch (err: any) {
+      setFormspreeNotice({ success: false, msg: `네트워크 오류: ${err.message}` });
+    } finally {
+      setIsTestingFormspree(false);
+    }
+  };
+
+  // Fetch initial SMTP status
+  useEffect(() => {
+    fetch('/api/smtp-config')
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.success) {
+          if (data.user) setSmtpUser(data.user);
+          if (data.targetEmail) setSmtpTargetEmail(data.targetEmail);
+          setIsSmtpConfigured(!!data.isConfigured);
+        }
+      })
+      .catch(() => {});
+  }, []);
+
+  const handleSaveAndTestSmtp = async () => {
+    if (!smtpPass.trim() && !isSmtpConfigured) {
+      alert('네이버 비밀번호 또는 2단계 인증 애플리케이션 비밀번호를 입력해 주세요.');
+      return;
+    }
+    setIsSavingSmtp(true);
+    setSmtpSaveNotice(null);
+    try {
+      const res = await fetch('/api/smtp-config', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          user: smtpUser,
+          pass: smtpPass,
+          targetEmail: smtpTargetEmail,
+        }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        setIsSmtpConfigured(true);
+        setSmtpSaveNotice({
+          success: true,
+          msg: `✅ 네이버 연동 성공! 테스트 메일이 ${smtpTargetEmail}로 즉시 발송되었습니다. 네이버 메일함을 확인해 보세요.`,
+        });
+        showToast('네이버 메일 발송 설정이 성공적으로 저장되었습니다.');
+      } else {
+        setSmtpSaveNotice({
+          success: false,
+          msg: `❌ 연동 실패: ${data.message || '로그인 정보를 확인해 주세요.'}`,
+        });
+      }
+    } catch (e: any) {
+      setSmtpSaveNotice({
+        success: false,
+        msg: `네트워크 요청 실패: ${e.message}`,
+      });
+    } finally {
+      setIsSavingSmtp(false);
+    }
+  };
 
   const handleTestSystemEmail = async () => {
     setIsTestingEmail(true);
@@ -288,6 +379,41 @@ export const AdminDashboardModal: React.FC = () => {
       });
     } finally {
       setIsTestingEmail(false);
+    }
+  };
+
+  // Inquiry Drawing attachment state & handler for Admin
+  const [uploadingInquiryId, setUploadingInquiryId] = useState<string | null>(null);
+
+  const handleAdminAttachDrawing = async (inquiryId: string, file: File) => {
+    setUploadingInquiryId(inquiryId);
+    try {
+      const reader = new FileReader();
+      reader.onload = async () => {
+        try {
+          const base64 = reader.result as string;
+          const res = await fetch('/api/upload-drawing', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ fileName: file.name, fileData: base64 }),
+          });
+          const data = await res.json();
+          if (data.success && data.url) {
+            updateInquiryDrawing(inquiryId, file.name, data.url);
+            showToast(`'${file.name}' 도면 파일이 성공적으로 연결되었습니다.`);
+          } else {
+            alert(data.error || '도면 업로드에 실패했습니다.');
+          }
+        } catch (e: any) {
+          alert('업로드 처리 오류: ' + e.message);
+        } finally {
+          setUploadingInquiryId(null);
+        }
+      };
+      reader.readAsDataURL(file);
+    } catch (err: any) {
+      setUploadingInquiryId(null);
+      alert('파일 읽기 오류: ' + err.message);
     }
   };
 
@@ -4486,88 +4612,398 @@ export const AdminDashboardModal: React.FC = () => {
 
           {/* TAB 6: Inquiries Inbox */}
           {activeTab === 'inquiries' && (
-            <div className="space-y-4">
-              <div className="flex flex-wrap items-center justify-between gap-3">
-                <h4 className="text-sm font-bold text-slate-900 flex items-center gap-2">
-                  <Inbox className="w-4 h-4 text-purple-700" />
-                  <span>실시간 수주 및 도면 견적 문의함 ({inquiries.length})</span>
-                </h4>
+            <div className="space-y-5">
+              {/* Header */}
+              <div className="flex flex-wrap items-center justify-between gap-3 pb-2 border-b border-slate-200">
+                <div className="flex items-center gap-2.5">
+                  <div className="p-2 rounded-xl bg-purple-100 text-purple-700">
+                    <Inbox className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <h4 className="text-base font-bold text-slate-900 flex items-center gap-2">
+                      <span>실시간 수주 및 도면 견적 문의함</span>
+                      <span className="px-2 py-0.5 rounded-full bg-purple-700 text-white text-xs font-bold font-mono">
+                        {inquiries.length}
+                      </span>
+                    </h4>
+                    <p className="text-xs text-slate-500 mt-0.5">
+                      홈페이지에서 접수된 고객의 견적 요청 및 첨부 도면을 실시간으로 확인하고 다운로드합니다.
+                    </p>
+                  </div>
+                </div>
 
-                <div className="flex items-center gap-2">
-                  <span className="text-[11px] text-emerald-700 font-bold bg-emerald-50 px-3 py-1 rounded-xl border border-emerald-200">
-                    시스템 자체 직발송 연동 중 ({companyInfo.email || 'baeksong_eng@naver.com'})
-                  </span>
+                <div className="flex flex-wrap items-center gap-2">
+                  <button
+                    onClick={() => setShowSmtpSettings(!showSmtpSettings)}
+                    className={`px-3.5 py-2 rounded-xl text-xs font-bold flex items-center gap-2 border transition-all cursor-pointer ${
+                      isSmtpConfigured
+                        ? 'bg-emerald-50 text-emerald-800 border-emerald-300 hover:bg-emerald-100'
+                        : 'bg-amber-50 text-amber-800 border-amber-300 hover:bg-amber-100 animate-pulse'
+                    }`}
+                  >
+                    <KeyRound className="w-3.5 h-3.5" />
+                    <span>{isSmtpConfigured ? '🟢 네이버 메일 연동 정상' : '⚙️ 네이버 메일 발송 설정 (비밀번호 입력)'}</span>
+                  </button>
+
+                  <a
+                    href="https://mail.naver.com"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="px-3.5 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-300 text-xs font-bold flex items-center gap-1.5 transition-all"
+                  >
+                    <Mail className="w-3.5 h-3.5 text-green-600" />
+                    <span>네이버 메일함 열기</span>
+                    <ExternalLink className="w-3 h-3 opacity-60" />
+                  </a>
                 </div>
               </div>
 
-              <div className="space-y-3">
-                {inquiries.map((inq) => (
-                  <div
-                    key={inq.id}
-                    className="p-5 rounded-2xl bg-slate-50 border border-slate-200 space-y-3 hover:border-purple-300"
-                  >
-                    <div className="flex flex-wrap items-center justify-between gap-2 pb-3 border-b border-slate-200">
+              {/* Formspree Instant Relay Card (Zero 2FA / Recommended for Shared Accounts) */}
+              <div className="p-5 rounded-2xl bg-gradient-to-br from-emerald-50 via-teal-50/50 to-blue-50/40 border-2 border-emerald-300 shadow-sm space-y-4">
+                <div className="flex flex-wrap items-center justify-between gap-3">
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 rounded-xl bg-emerald-600 text-white shadow-xs">
+                      <CheckCircle2 className="w-5 h-5" />
+                    </div>
+                    <div>
                       <div className="flex items-center gap-2">
-                        <span className="font-bold text-slate-900 text-sm">{inq.companyName}</span>
-                        <span className="text-slate-600 text-xs font-semibold">
-                          ({inq.contactName} / {inq.phone})
+                        <h5 className="text-sm font-bold text-slate-900">
+                          폼스프리(Formspree) 자동 메일 전달 활성화됨
+                        </h5>
+                        <span className="text-[10px] font-extrabold px-2.5 py-0.5 rounded-full bg-emerald-600 text-white shadow-xs">
+                          연동 가동 중 (추천 방식)
                         </span>
                       </div>
-
-                      <div className="flex items-center gap-2">
-                        <span className="text-slate-400 font-mono text-[11px]">{inq.createdAt}</span>
-
-                        <select
-                          value={inq.status}
-                          onChange={(e: any) => updateInquiryStatus(inq.id, e.target.value)}
-                          className={`px-2.5 py-1 rounded-lg text-xs font-bold border ${
-                            inq.status === '대기중'
-                              ? 'bg-amber-50 text-amber-800 border-amber-300'
-                              : inq.status === '검토중'
-                              ? 'bg-purple-50 text-purple-800 border-purple-300'
-                              : 'bg-emerald-50 text-emerald-800 border-emerald-300'
-                          }`}
-                        >
-                          <option value="대기중">대기중</option>
-                          <option value="검토중">검토중</option>
-                          <option value="답변완료">답변완료</option>
-                        </select>
-
-                        <button
-                          onClick={() => deleteInquiry(inq.id)}
-                          className="p-1.5 rounded-lg bg-red-50 text-red-600 hover:bg-red-100 border border-red-200"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
-                      </div>
+                      <p className="text-xs text-slate-600 mt-0.5">
+                        엔드포인트: <code className="font-mono text-emerald-800 bg-emerald-100/70 px-1.5 py-0.5 rounded text-[11px]">https://formspree.io/f/xgawngpn</code> → 수신: <strong className="text-slate-800">baeksong_eng@naver.com</strong>
+                      </p>
                     </div>
-
-                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs bg-white p-3 rounded-xl border border-slate-200">
-                      <div>
-                        <span className="text-slate-400 block">카테고리:</span>
-                        <span className="text-slate-800 font-bold">{inq.category}</span>
-                      </div>
-                      <div>
-                        <span className="text-slate-400 block">소재:</span>
-                        <span className="text-purple-700 font-bold">{inq.material}</span>
-                      </div>
-                      <div>
-                        <span className="text-slate-400 block">수량:</span>
-                        <span className="text-slate-800 font-mono font-bold">{inq.quantity}</span>
-                      </div>
-                      <div>
-                        <span className="text-slate-400 block">첨부 도면:</span>
-                        <span className="text-emerald-700 font-bold font-mono truncate block">
-                          {inq.drawingFileName || '없음'}
-                        </span>
-                      </div>
-                    </div>
-
-                    <p className="text-xs text-slate-700 bg-white p-3 rounded-xl border border-slate-200 leading-relaxed whitespace-pre-line">
-                      {inq.message}
-                    </p>
                   </div>
-                ))}
+
+                  <button
+                    onClick={handleTestFormspree}
+                    disabled={isTestingFormspree}
+                    className="px-4 py-2.5 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white font-bold text-xs flex items-center gap-2 shadow-sm transition-all cursor-pointer disabled:opacity-50"
+                  >
+                    {isTestingFormspree ? (
+                      <>
+                        <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                        <span>네이버로 발송 중...</span>
+                      </>
+                    ) : (
+                      <>
+                        <Send className="w-3.5 h-3.5" />
+                        <span>폼스프리 실시간 테스트 발송</span>
+                      </>
+                    )}
+                  </button>
+                </div>
+
+                <div className="p-3.5 bg-white/95 rounded-xl border border-emerald-200 text-xs text-slate-700 leading-relaxed flex items-start gap-2.5">
+                  <span className="text-base shrink-0">✨</span>
+                  <div>
+                    <strong className="text-emerald-950 font-bold">회사 공용 네이버 계정 최적화 완료:</strong><br/>
+                    네이버 2단계 인증이나 비밀번호 입력 없이도, 고객이 웹사이트에서 견적을 요청하거나 CAD 도면을 업로드하면 <strong>baeksong_eng@naver.com 메일함으로 도면 다운로드 링크와 함께 즉시 자동 배달</strong>됩니다!
+                  </div>
+                </div>
+
+                {formspreeNotice && (
+                  <div className={`p-3.5 rounded-xl text-xs font-semibold flex items-start gap-2.5 border ${
+                    formspreeNotice.success
+                      ? 'bg-emerald-100 text-emerald-900 border-emerald-400'
+                      : 'bg-amber-50 text-amber-900 border-amber-300'
+                  }`}>
+                    {formspreeNotice.success ? (
+                      <CheckCircle2 className="w-4 h-4 text-emerald-700 shrink-0 mt-0.5" />
+                    ) : (
+                      <AlertCircle className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
+                    )}
+                    <div className="flex-1 whitespace-pre-line leading-relaxed">
+                      {formspreeNotice.msg}
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Naver SMTP Configuration & Test Card */}
+              {showSmtpSettings && (
+                <div className="p-5 rounded-2xl bg-gradient-to-br from-slate-50 to-emerald-50/40 border-2 border-emerald-200/80 shadow-xs space-y-4">
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <div className="flex items-center gap-2">
+                      <div className="p-1.5 rounded-lg bg-emerald-600 text-white">
+                        <KeyRound className="w-4 h-4" />
+                      </div>
+                      <h5 className="text-sm font-bold text-slate-900">
+                        네이버 메일(baeksong_eng@naver.com) 자동 수신 연동 설정
+                      </h5>
+                    </div>
+                    <span className={`text-[11px] font-bold px-2.5 py-1 rounded-full border ${
+                      isSmtpConfigured
+                        ? 'bg-emerald-100 text-emerald-800 border-emerald-300'
+                        : 'bg-amber-100 text-amber-800 border-amber-300'
+                    }`}>
+                      {isSmtpConfigured ? '✓ 연동 등록 완료' : '⚠️ 비밀번호 등록 필요'}
+                    </span>
+                  </div>
+
+                  <div className="p-3 bg-white rounded-xl border border-slate-200 text-xs text-slate-600 leading-relaxed">
+                    <strong className="text-slate-900">💡 네이버 메일로 고객 문의가 안 오는 원인 및 해결 방법:</strong><br/>
+                    네이버 메일 환경설정에서 POP3/IMAP을 켜셨더라도, <strong>웹 서버가 네이버 계정으로 로그인하여 발송(SMTP)</strong>할 수 있도록 비밀번호가 등록되어야 메일이 발송됩니다.
+                    아래에 네이버 계정 비밀번호(또는 2단계 인증 애플리케이션 비밀번호)를 입력하고 <strong>[설정 저장 및 발송 테스트]</strong>를 눌러주시면 즉시 해결됩니다!
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                    <div>
+                      <label className="block text-xs font-bold text-slate-700 mb-1">네이버 아이디</label>
+                      <input
+                        type="text"
+                        value={smtpUser}
+                        onChange={(e) => setSmtpUser(e.target.value)}
+                        placeholder="baeksong_eng"
+                        className="w-full px-3 py-2 bg-white rounded-xl border border-slate-300 text-xs font-medium focus:border-emerald-500 focus:outline-none"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-bold text-slate-700 mb-1">
+                        네이버 비밀번호 (또는 앱 비밀번호)
+                      </label>
+                      <input
+                        type="password"
+                        value={smtpPass}
+                        onChange={(e) => setSmtpPass(e.target.value)}
+                        placeholder={isSmtpConfigured ? '•••••••••••• (등록됨, 변경 시 입력)' : '네이버 계정 비밀번호'}
+                        className="w-full px-3 py-2 bg-white rounded-xl border border-slate-300 text-xs font-medium focus:border-emerald-500 focus:outline-none"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-bold text-slate-700 mb-1">수신 메일 주소</label>
+                      <input
+                        type="text"
+                        value={smtpTargetEmail}
+                        onChange={(e) => setSmtpTargetEmail(e.target.value)}
+                        placeholder="baeksong_eng@naver.com"
+                        className="w-full px-3 py-2 bg-white rounded-xl border border-slate-300 text-xs font-medium focus:border-emerald-500 focus:outline-none"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="flex flex-wrap items-center justify-between gap-3 pt-2">
+                    <div className="text-[11px] text-slate-700 bg-amber-50 p-3 rounded-xl border border-amber-300 w-full sm:w-auto flex-1 leading-relaxed">
+                      <strong className="text-amber-900 block font-bold mb-1">💡 네이버 535 오류 원인 및 해결 (네이버 보안 정책 안내):</strong>
+                      네이버는 외부 프로그램 연동 시 <strong>일반 비밀번호 로그인을 전면 차단</strong>하고, <strong>[전용 애플리케이션 비밀번호]</strong>만 허용합니다 (네이버 환경설정 안내문 참조).<br/>
+                      <span className="text-slate-800 font-semibold">
+                        해결 방법: 네이버 보안설정에서 <strong>[2단계인증 설정]</strong> 후 생성되는 <strong>[애플리케이션 비밀번호(16자리)]</strong>를 복사하여 위 비밀번호 칸에 넣어주시면 즉시 100% 연동됩니다.
+                      </span>
+                    </div>
+
+                    <div className="flex items-center gap-2">
+                      <button
+                        onClick={handleSaveAndTestSmtp}
+                        disabled={isSavingSmtp}
+                        className="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs flex items-center gap-2 shadow-sm transition-all cursor-pointer disabled:opacity-50"
+                      >
+                        {isSavingSmtp ? (
+                          <>
+                            <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                            <span>네이버 연결 확인 중...</span>
+                          </>
+                        ) : (
+                          <>
+                            <Send className="w-3.5 h-3.5" />
+                            <span>설정 저장 및 네이버 발송 테스트</span>
+                          </>
+                        )}
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Test Feedback Notice */}
+                  {smtpSaveNotice && (
+                    <div className={`p-3.5 rounded-xl text-xs font-semibold flex items-start gap-2.5 border ${
+                      smtpSaveNotice.success
+                        ? 'bg-emerald-50 text-emerald-900 border-emerald-300'
+                        : 'bg-amber-50 text-amber-900 border-amber-300'
+                    }`}>
+                      {smtpSaveNotice.success ? (
+                        <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
+                      ) : (
+                        <AlertCircle className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
+                      )}
+                      <div className="flex-1 whitespace-pre-line leading-relaxed">
+                        {smtpSaveNotice.msg}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Inquiries List */}
+              <div className="space-y-4">
+                {inquiries.map((inq) => {
+                  const effectiveDrawingUrl = inq.drawingFileUrl || (
+                    inq.message?.match(/(\/api\/drawings\/[^\s\n]+|https?:\/\/[^\s\n]+)/)?.[0]
+                  );
+                  const hasDrawingName = Boolean(
+                    inq.drawingFileName &&
+                    inq.drawingFileName !== '없음' &&
+                    inq.drawingFileName !== '도면 파일 첨부 없음' &&
+                    inq.drawingFileName !== '도면 파일 첨부 완료'
+                  );
+                  // Ensure direct download URL is always active whenever a drawing file is referenced
+                  const downloadUrl = effectiveDrawingUrl || (hasDrawingName ? `/api/drawings/${encodeURIComponent(inq.drawingFileName || 'drawing.dwg')}` : null);
+
+                  return (
+                    <div
+                      key={inq.id}
+                      className="p-5 rounded-2xl bg-slate-50 border border-slate-200 space-y-3.5 hover:border-purple-300 shadow-xs transition-all"
+                    >
+                      <div className="flex flex-wrap items-center justify-between gap-2 pb-3 border-b border-slate-200">
+                        <div className="flex items-center gap-2">
+                          <span className="font-bold text-slate-900 text-sm">{inq.companyName}</span>
+                          <span className="text-slate-600 text-xs font-semibold">
+                            ({inq.contactName} / {inq.phone})
+                          </span>
+                        </div>
+
+                        <div className="flex items-center gap-2">
+                          <span className="text-slate-400 font-mono text-[11px]">{inq.createdAt}</span>
+
+                          <select
+                            value={inq.status}
+                            onChange={(e: any) => updateInquiryStatus(inq.id, e.target.value)}
+                            className={`px-2.5 py-1 rounded-lg text-xs font-bold border ${
+                              inq.status === '대기중'
+                                ? 'bg-amber-50 text-amber-800 border-amber-300'
+                                : inq.status === '검토중'
+                                ? 'bg-purple-50 text-purple-800 border-purple-300'
+                                : 'bg-emerald-50 text-emerald-800 border-emerald-300'
+                            }`}
+                          >
+                            <option value="대기중">대기중</option>
+                            <option value="검토중">검토중</option>
+                            <option value="답변완료">답변완료</option>
+                          </select>
+
+                          <button
+                            onClick={() => deleteInquiry(inq.id)}
+                            className="p-1.5 rounded-lg bg-red-50 text-red-600 hover:bg-red-100 border border-red-200 cursor-pointer"
+                            title="삭제"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </div>
+                      </div>
+
+                      <div className="space-y-3">
+                        {/* Summary Grid */}
+                        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs bg-white p-3 rounded-xl border border-slate-200">
+                          <div>
+                            <span className="text-slate-400 block text-[11px]">카테고리:</span>
+                            <span className="text-slate-800 font-bold">{inq.category}</span>
+                          </div>
+                          <div>
+                            <span className="text-slate-400 block text-[11px]">소재:</span>
+                            <span className="text-purple-700 font-bold">{inq.material}</span>
+                          </div>
+                          <div>
+                            <span className="text-slate-400 block text-[11px]">수량:</span>
+                            <span className="text-slate-800 font-mono font-bold">{inq.quantity}</span>
+                          </div>
+                          <div>
+                            <span className="text-slate-400 block text-[11px]">첨부 도면:</span>
+                            <span className="text-emerald-700 font-bold font-mono truncate block" title={inq.drawingFileName}>
+                              {inq.drawingFileName || '없음'}
+                            </span>
+                          </div>
+                        </div>
+
+                        {/* Direct Drawing Download Banner */}
+                        {hasDrawingName && (
+                          <div className="p-3.5 rounded-xl border bg-emerald-50 border-emerald-300 flex flex-wrap items-center justify-between gap-3 shadow-xs">
+                            <div className="flex items-center gap-3 text-xs">
+                              <div className="p-2.5 rounded-xl bg-emerald-600 text-white shadow-xs">
+                                <FileText className="w-5 h-5" />
+                              </div>
+                              <div>
+                                <div className="flex items-center gap-2">
+                                  <span className="font-bold text-slate-900 text-xs">첨부 도면 파일:</span>
+                                  <span className="font-mono font-bold text-emerald-900 text-xs bg-white px-2.5 py-0.5 rounded-md border border-emerald-300">
+                                    {inq.drawingFileName}
+                                  </span>
+                                </div>
+                                <span className="text-[11px] text-emerald-800 block mt-1">
+                                  ✓ 고객이 전송한 도면 파일입니다. 아래 [도면 파일 즉시 다운로드] 버튼을 누르면 원본 파일로 바로 다운로드됩니다.
+                                </span>
+                              </div>
+                            </div>
+
+                            <div className="flex items-center gap-2">
+                              {downloadUrl && (
+                                <a
+                                  href={downloadUrl}
+                                  download={inq.drawingFileName || 'drawing.dwg'}
+                                  className="px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs flex items-center gap-2 shadow-sm transition-all cursor-pointer active:scale-95"
+                                  title="클릭하여 도면 파일 다이렉트 다운로드"
+                                >
+                                  <Download className="w-4 h-4" />
+                                  <span>도면 파일 즉시 다운로드 (열기)</span>
+                                </a>
+                              )}
+
+                              {/* Attach / Replace drawing file */}
+                              <label className="px-3 py-2 rounded-xl bg-white hover:bg-slate-100 text-slate-700 border border-slate-300 text-xs font-semibold flex items-center gap-1.5 transition-all cursor-pointer" title="도면 파일 교체">
+                                {uploadingInquiryId === inq.id ? (
+                                  <>
+                                    <Loader2 className="w-3.5 h-3.5 animate-spin text-purple-600" />
+                                    <span>도면 저장 중...</span>
+                                  </>
+                                ) : (
+                                  <>
+                                    <Upload className="w-3.5 h-3.5 text-slate-500" />
+                                    <span>도면 교체</span>
+                                  </>
+                                )}
+                                <input
+                                  type="file"
+                                  className="hidden"
+                                  disabled={uploadingInquiryId === inq.id}
+                                  onChange={(e) => {
+                                    const f = e.target.files?.[0];
+                                    if (f) handleAdminAttachDrawing(inq.id, f);
+                                  }}
+                                />
+                              </label>
+                            </div>
+                          </div>
+                        )}
+
+                        {/* Customer Message */}
+                        <div className="text-xs text-slate-700 bg-white p-3.5 rounded-xl border border-slate-200 leading-relaxed whitespace-pre-line">
+                          {inq.message}
+                        </div>
+
+                        {/* Footer with Reply & Direct Actions */}
+                        <div className="flex flex-wrap items-center justify-between gap-2 pt-1 text-xs">
+                          <div className="text-slate-500">
+                            고객 이메일: <a href={`mailto:${inq.email}`} className="text-blue-600 font-bold hover:underline">{inq.email}</a>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <a
+                              href={`https://mail.naver.com/v2/write?to=${encodeURIComponent(inq.email)}&subject=${encodeURIComponent(`[(주)백송이엔지] ${inq.companyName} 견적/상담 회신`)}&body=${encodeURIComponent(`안녕하세요, ${inq.companyName} ${inq.contactName} 담당자님.\n\n(주)백송이엔지에 보내주신 문의 및 도면 견적 회신드립니다.\n\n[문의 내용 요약]\n- 연락처: ${inq.phone}\n- 품목: ${inq.category}\n- 소재: ${inq.material}\n- 수량: ${inq.quantity}\n\n[고객 전달 내용]\n${inq.message || ''}\n\n감사합니다.\n(주)백송이엔지 드림\nTEL: 032-816-3690`)}`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="px-3 py-1.5 rounded-lg bg-green-50 text-green-800 hover:bg-green-100 border border-green-300 font-semibold flex items-center gap-1.5 transition-all"
+                            >
+                              <Mail className="w-3.5 h-3.5 text-green-700" />
+                              <span>네이버 메일로 답장 쓰기</span>
+                              <ExternalLink className="w-3 h-3 opacity-60" />
+                            </a>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
 
                 {inquiries.length === 0 && (
                   <div className="p-12 text-center text-slate-400 bg-slate-50 rounded-2xl border border-slate-200">

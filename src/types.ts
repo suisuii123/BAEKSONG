@@ -167,6 +167,7 @@ export interface Inquiry {
   material: string;
   quantity: string;
   drawingFileName?: string;
+  drawingFileUrl?: string;
   message: string;
   createdAt: string;
   status: '대기중' | '검토중' | '답변완료';

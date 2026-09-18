@@ -1,3 +1,5 @@
+import fs from 'fs';
+import path from 'path';
 import nodemailer from 'nodemailer';
 
 export interface InquiryMailPayload {
@@ -14,21 +16,128 @@ export interface InquiryMailPayload {
   source?: string;
 }
 
+export interface SmtpSettings {
+  host: string;
+  port: number;
+  user: string;
+  pass: string;
+  targetEmail: string;
+}
+
+export function getSmtpConfig(): SmtpSettings {
+  let host = process.env.SMTP_HOST || 'smtp.naver.com';
+  let port = parseInt(process.env.SMTP_PORT || '465', 10);
+  let user = process.env.SMTP_USER || 'baeksong_eng';
+  let pass = process.env.SMTP_PASS || '';
+  let targetEmail = process.env.MAIL_TO || 'baeksong_eng@naver.com';
+
+  // Check data/cms_persistent_data.json if env pass is not provided
+  try {
+    const cmsFile = path.join(process.cwd(), 'data', 'cms_persistent_data.json');
+    if (fs.existsSync(cmsFile)) {
+      const parsed = JSON.parse(fs.readFileSync(cmsFile, 'utf-8'));
+      if (parsed.smtpConfig) {
+        if (parsed.smtpConfig.host) host = parsed.smtpConfig.host;
+        if (parsed.smtpConfig.port) port = parseInt(parsed.smtpConfig.port, 10);
+        if (parsed.smtpConfig.user) user = parsed.smtpConfig.user;
+        if (parsed.smtpConfig.pass) pass = parsed.smtpConfig.pass;
+        if (parsed.smtpConfig.targetEmail) targetEmail = parsed.smtpConfig.targetEmail;
+      }
+    }
+  } catch (err) {
+    console.warn('[Mailer] Could not read smtpConfig from cms storage:', err);
+  }
+
+  return { host, port, user, pass, targetEmail };
+}
+
+export async function testSmtpConnection(overrideConfig?: Partial<SmtpSettings>): Promise<{
+  success: boolean;
+  message: string;
+  detail?: string;
+}> {
+  const current = getSmtpConfig();
+  const host = overrideConfig?.host || current.host;
+  const port = overrideConfig?.port || current.port;
+  const user = overrideConfig?.user || current.user;
+  const pass = overrideConfig?.pass || current.pass;
+  const targetEmail = overrideConfig?.targetEmail || current.targetEmail;
+
+  if (!pass) {
+    return {
+      success: false,
+      message: '네이버 비밀번호가 입력되지 않았습니다. 비밀번호 또는 2단계 인증 애플리케이션 비밀번호를 입력해 주세요.',
+    };
+  }
+
+  try {
+    const isSsl = port === 465;
+    const transporter = nodemailer.createTransport({
+      host,
+      port,
+      secure: isSsl,
+      auth: { user, pass },
+      tls: { rejectUnauthorized: false },
+    });
+
+    // 1. Verify connection
+    await transporter.verify();
+
+    // 2. Send test email to target
+    const senderEmail = user.includes('@') ? user : `${user}@naver.com`;
+    await transporter.sendMail({
+      from: `"백송이엔지 시스템" <${senderEmail}>`,
+      to: targetEmail,
+      subject: `[백송이엔지] 네이버 메일 연동 테스트 성공 (${new Date().toLocaleTimeString('ko-KR')})`,
+      text: `네이버 메일 연동이 성공적으로 완료되었습니다.\n이제 홈페이지에서 고객이 견적이나 도면을 접수하면 ${targetEmail}로 실시간 자동 발송됩니다.`,
+      html: `
+        <div style="padding: 20px; font-family: sans-serif; border: 1px solid #10b981; border-radius: 10px; max-width: 500px;">
+          <h2 style="color: #059669; margin-top: 0;">🎉 네이버 메일 연동 성공!</h2>
+          <p style="color: #334155; line-height: 1.6;">
+            (주)백송이엔지 홈페이지 시스템에서 보낸 네이버 SMTP 연동 테스트 메일입니다.<br/>
+            정상적으로 수신되셨다면 연동이 100% 완료된 상태입니다.
+          </p>
+          <div style="background: #f1f5f9; padding: 12px; border-radius: 6px; font-size: 13px; color: #475569;">
+            • 발신 계정: ${senderEmail}<br/>
+            • 수신 메일함: ${targetEmail}<br/>
+            • 발송 일시: ${new Date().toLocaleString('ko-KR', { timeZone: 'Asia/Seoul' })}
+          </div>
+        </div>
+      `,
+    });
+
+    return {
+      success: true,
+      message: `네이버 메일 발송 성공! ${targetEmail} 메일함을 확인해 보세요.`,
+    };
+  } catch (error: any) {
+    console.warn('[Mailer Test Info]: SMTP authentication failed:', error?.message);
+    let friendlyMessage = error.message || '네이버 메일 연결에 실패했습니다.';
+    if (error.code === 'EAUTH' || error.responseCode === 535) {
+      friendlyMessage = '네이버 로그인 실패 (535): 네이버 보안설정에서 [해외로그인차단]이 ON으로 켜져 있거나, 네이버 메일 환경설정에서 POP3/SMTP가 사용안함 상태일 때 발생합니다.\n\n해결 방법:\n1. 네이버 내정보 → 보안설정 → [해외로그인차단]을 OFF로 꺼주세요. (홈페이지 클라우드 서버가 접속할 수 있도록 허용)\n2. 네이버 메일 → 환경설정 → POP3/IMAP 설정 → [POP3/SMTP] 사용함을 확인해 주세요.';
+    } else if (error.code === 'ESOCKET' || error.code === 'ETIMEDOUT') {
+      friendlyMessage = '네이버 메일 서버(smtp.naver.com:465) 연결 시간 초과. 네이버 환경설정 > POP3/SMTP 설정이 [사용함]으로 켜져 있는지 확인해 주세요.';
+    }
+
+    return {
+      success: false,
+      message: friendlyMessage,
+      detail: error.message,
+    };
+  }
+}
+
 export async function sendInquiryEmail(
   data: InquiryMailPayload
 ): Promise<{ success: boolean; emailSent: boolean; message: string; error?: string }> {
-  const smtpUser = process.env.SMTP_USER || 'baeksong_eng';
-  const smtpPass = process.env.SMTP_PASS;
-  const smtpHost = process.env.SMTP_HOST || 'smtp.naver.com';
-  const smtpPort = parseInt(process.env.SMTP_PORT || '465', 10);
-  const targetEmail = process.env.MAIL_TO || 'baeksong_eng@naver.com';
+  const { host: smtpHost, port: smtpPort, user: smtpUser, pass: smtpPass, targetEmail } = getSmtpConfig();
 
   // If SMTP_PASS is not provided, return info that data is stored in CMS
   if (!smtpPass) {
     return {
       success: true,
       emailSent: false,
-      message: '문의 내역이 백송이엔지 데이터베이스에 안전하게 저장되었습니다. (네이버 SMTP 비밀번호 미등록 상태)',
+      message: '문의 내역이 백송이엔지 관리자 데이터베이스에 안전하게 저장되었습니다. (네이버 SMTP 비밀번호 미등록 상태 - 관리자 화면에서 네이버 연동 비밀번호를 저장하시면 실시간 메일함으로 자동 전송됩니다.)',
     };
   }
 
@@ -146,7 +255,7 @@ ${data.message || '상세 문의 내용 없음'}
       message: `이메일이 ${targetEmail}로 성공적으로 자동 발송되었습니다.`,
     };
   } catch (error: any) {
-    console.error('[SMTP Mailer] Error sending inquiry email:', error);
+    console.warn('[SMTP Mailer Info] Notice sending inquiry email:', error?.message);
     return {
       success: false,
       emailSent: false,

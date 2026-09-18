@@ -70,6 +70,7 @@ interface CMSContextType {
   inquiries: Inquiry[];
   addInquiry: (inquiry: Omit<Inquiry, 'id' | 'createdAt' | 'status'>) => void;
   updateInquiryStatus: (id: string, status: Inquiry['status']) => void;
+  updateInquiryDrawing: (id: string, drawingFileName: string, drawingFileUrl: string) => void;
   deleteInquiry: (id: string) => void;
   
   certifications: Certification[];
@@ -925,6 +926,14 @@ export const CMSProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     });
   };
 
+  const updateInquiryDrawing = (id: string, drawingFileName: string, drawingFileUrl: string) => {
+    setInquiries((prev) => {
+      const next = prev.map((i) => (i.id === id ? { ...i, drawingFileName, drawingFileUrl } : i));
+      saveSectionToFirestore('inquiries', next);
+      return next;
+    });
+  };
+
   const deleteInquiry = (id: string) => {
     setInquiries((prev) => {
       const next = prev.filter((i) => i.id !== id);
@@ -1238,6 +1247,7 @@ export const CMSProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         inquiries,
         addInquiry,
         updateInquiryStatus,
+        updateInquiryDrawing,
         deleteInquiry,
         certifications,
         addCertification,
