@@ -2,9 +2,11 @@ import React, { useState } from 'react';
 import { Navigation, Phone, Mail, Printer, Building, Copy, Check } from 'lucide-react';
 import { CompanyLogo } from './CompanyLogo';
 import { useLanguage } from '../context/LanguageContext';
+import { useCMS } from '../context/CMSContext';
 
 export const CompanyMapDiagram: React.FC = () => {
   const { t, language } = useLanguage();
+  const { companyInfo } = useCMS();
   const [copiedAddress, setCopiedAddress] = useState<string | null>(null);
 
   const plant1Addr =
@@ -559,10 +561,10 @@ export const CompanyMapDiagram: React.FC = () => {
                 <div>
                   <span className="text-slate-500 block text-xs font-extrabold uppercase tracking-wider">E - M A I L</span>
                   <a
-                    href="mailto:kcyexr@naver.com"
+                    href={`mailto:${companyInfo.email || 'baeksong_eng@naver.com'}`}
                     className="text-purple-800 font-mono text-sm sm:text-base font-black hover:underline"
                   >
-                    kcyexr@naver.com
+                    {companyInfo.email || 'baeksong_eng@naver.com'}
                   </a>
                 </div>
               </div>

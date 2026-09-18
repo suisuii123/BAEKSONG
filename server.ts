@@ -4,6 +4,8 @@ import fs from "fs";
 import { createServer as createViteServer } from "vite";
 import { GoogleGenAI, Type } from "@google/genai";
 import dotenv from "dotenv";
+import { updateSitemapFiles, generateSitemapXml } from "./scripts/generate-sitemap";
+import { sendInquiryEmail } from "./server/mailer";
 
 dotenv.config();
 
@@ -97,6 +99,13 @@ async function startServer() {
       fs.writeFileSync(tempFile, JSON.stringify(data, null, 2), "utf-8");
       fs.renameSync(tempFile, CMS_STORAGE_FILE);
 
+      // Automatically update sitemap.xml with any new or modified products in real-time
+      try {
+        updateSitemapFiles();
+      } catch (sitemapErr) {
+        console.warn("[SEO] Auto-sitemap update warning:", sitemapErr);
+      }
+
       return res.json({
         success: true,
         message: "CMS data saved permanently and safely",
@@ -118,6 +127,112 @@ async function startServer() {
     } catch (error: any) {
       console.error("Error resetting CMS storage:", error);
       return res.status(500).json({ success: false, error: error?.message });
+    }
+  });
+
+  // Direct Inquiry & Email sending endpoint (replaces Formspree)
+  app.post("/api/send-inquiry", async (req, res) => {
+    try {
+      const {
+        companyName,
+        contactName,
+        phone,
+        email,
+        category,
+        material,
+        quantity,
+        drawingFileName,
+        drawingFileUrl,
+        message,
+        source,
+      } = req.body;
+
+      if (!contactName || !phone || !email) {
+        return res.status(400).json({
+          success: false,
+          error: "담당자명, 연락처, 이메일은 필수 입력 항목입니다.",
+        });
+      }
+
+      // 1. Save to CMS persistent data file immediately so inquiry is never lost
+      try {
+        if (fs.existsSync(CMS_STORAGE_FILE)) {
+          const raw = fs.readFileSync(CMS_STORAGE_FILE, "utf-8");
+          const cmsData = JSON.parse(raw);
+          if (cmsData && Array.isArray(cmsData.inquiries)) {
+            const newInq = {
+              id: `inq-${Date.now()}`,
+              companyName: companyName || "(고객사 미입력)",
+              contactName,
+              phone,
+              email,
+              category: category || "도면/요청사항 참조",
+              material: material || "도면/요청사항 참조",
+              quantity: quantity || "도면/요청사항 참조",
+              drawingFileName: drawingFileName || (drawingFileUrl ? "첨부 도면 (클라우드 링크)" : "첨부 없음"),
+              message: drawingFileUrl ? `${message || ''}\n[도면 다운로드 링크]: ${drawingFileUrl}` : (message || ''),
+              createdAt: new Date().toISOString().replace('T', ' ').substring(0, 16),
+              status: "대기중",
+            };
+            cmsData.inquiries.unshift(newInq);
+            fs.writeFileSync(CMS_STORAGE_FILE, JSON.stringify(cmsData, null, 2), "utf-8");
+          }
+        }
+      } catch (dbErr) {
+        console.warn("[Server] Warning saving inquiry to CMS file:", dbErr);
+      }
+
+      // 2. Dispatch email directly via Nodemailer
+      const mailResult = await sendInquiryEmail({
+        companyName,
+        contactName,
+        phone,
+        email,
+        category,
+        material,
+        quantity,
+        drawingFileName,
+        drawingFileUrl,
+        message,
+        source,
+      });
+
+      return res.json({
+        success: true,
+        emailSent: mailResult.emailSent,
+        message: mailResult.message,
+      });
+    } catch (error: any) {
+      console.error("[Server] Error in /api/send-inquiry:", error);
+      return res.status(500).json({
+        success: false,
+        error: error?.message || "서버 내부 오류",
+      });
+    }
+  });
+
+  // SMTP Mail test endpoint
+  app.post("/api/test-email", async (req, res) => {
+    try {
+      const mailResult = await sendInquiryEmail({
+        companyName: "(주)백송이엔지 시스템",
+        contactName: "관리자 연동 테스트",
+        phone: "032-816-3690",
+        email: "baeksong_eng@naver.com",
+        category: "시스템 이메일 연동 테스트",
+        material: "AL6061-T6",
+        quantity: "1 EA",
+        message: "백송이엔지 자체 시스템 메일러(네이버 SMTP) 정상 발송 테스트 메일입니다.",
+        source: "관리자 대시보드 테스트",
+      });
+
+      return res.json(mailResult);
+    } catch (error: any) {
+      return res.status(500).json({
+        success: false,
+        emailSent: false,
+        message: error?.message || "테스트 발송 오류",
+      });
     }
   });
 
@@ -158,28 +273,19 @@ async function startServer() {
   });
 
   app.get("/sitemap.xml", (req, res) => {
-    const publicSitemap = path.join(process.cwd(), "public", "sitemap.xml");
-    const distSitemap = path.join(process.cwd(), "dist", "sitemap.xml");
-    const filePath = fs.existsSync(publicSitemap) ? publicSitemap : distSitemap;
-
     res.setHeader("Content-Type", "application/xml; charset=utf-8");
-    if (fs.existsSync(filePath)) {
-      return res.sendFile(filePath);
-    }
-
     try {
-      const { generateSitemapXml } = require("./scripts/generate-sitemap");
-      return res.send(generateSitemapXml());
-    } catch {
-      return res.send(`<?xml version="1.0" encoding="UTF-8"?>
-<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-  <url>
-    <loc>https://www.baeksongeng.com/</loc>
-    <lastmod>${new Date().toISOString().split('T')[0]}</lastmod>
-    <changefreq>daily</changefreq>
-    <priority>1.0</priority>
-  </url>
-</urlset>`);
+      const freshXml = generateSitemapXml();
+      return res.send(freshXml);
+    } catch (e) {
+      console.warn("[SEO] Dynamic sitemap generation fallback:", e);
+      const publicSitemap = path.join(process.cwd(), "public", "sitemap.xml");
+      const distSitemap = path.join(process.cwd(), "dist", "sitemap.xml");
+      const filePath = fs.existsSync(publicSitemap) ? publicSitemap : distSitemap;
+      if (fs.existsSync(filePath)) {
+        return res.sendFile(filePath);
+      }
+      return res.status(500).send("Error loading sitemap");
     }
   });
 

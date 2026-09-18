@@ -14,7 +14,7 @@ import {
   FileText,
   Loader2,
 } from 'lucide-react';
-import { submitToFormspree, DEFAULT_FORMSPREE_ENDPOINT } from '../utils/formspree';
+import { submitDirectInquiry } from '../services/inquiryService';
 
 export const QuoteCalculatorModal: React.FC = () => {
   const { isQuoteModalOpen, setIsQuoteModalOpen, companyInfo, addInquiry } = useCMS();
@@ -29,6 +29,7 @@ export const QuoteCalculatorModal: React.FC = () => {
 
   const [submitted, setSubmitted] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
 
   if (!isQuoteModalOpen) return null;
 
@@ -43,26 +44,25 @@ export const QuoteCalculatorModal: React.FC = () => {
     if (!contactName || !phone || !email) return;
 
     setIsSubmitting(true);
+    setSubmitError(null);
+
+    const targetEmail = companyInfo.email || 'baeksong_eng@naver.com';
 
     try {
-      const formspreeEndpoint = companyInfo.formspreeUrl || DEFAULT_FORMSPREE_ENDPOINT;
-      await submitToFormspree(
-        {
-          companyName: companyName || '(주)백송이엔지 상담/견적 고객',
-          contactName,
-          phone,
-          email,
-          category: '이메일 상담 / 도면 견적',
-          material: '도면/요청사항 참조',
-          quantity: '도면/요청사항 참조',
-          drawingFileName: file ? file.name : '도면 파일 첨부 없음',
-          message,
-          source: '상단 이메일 상담 모달 창',
-          file,
-        },
-        formspreeEndpoint
-      );
+      const res = await submitDirectInquiry({
+        companyName: companyName || '(주)백송이엔지 상담/견적 고객',
+        contactName,
+        phone,
+        email,
+        category: '이메일 상담 / 도면 견적',
+        material: '도면/요청사항 참조',
+        quantity: '도면/요청사항 참조',
+        message,
+        source: '상단 이메일 상담 모달 창',
+        file,
+      });
 
+      // Save inquiry to local / Cloud CMS context so admin can review instantly
       addInquiry({
         companyName: companyName || '(주)백송이엔지 견적요청 고객',
         contactName,
@@ -71,12 +71,15 @@ export const QuoteCalculatorModal: React.FC = () => {
         category: '도면/요청사항 참조',
         material: '도면/요청사항 참조',
         quantity: '도면/요청사항 참조',
-        drawingFileName: file ? file.name : '도면 파일 첨부 완료',
-        message: `${message}\n[Formspree 전송완료 / 수신처: ${companyInfo.email}]`,
+        drawingFileName: file ? `${file.name} (${(file.size / 1024).toFixed(1)} KB)` : '도면 파일 첨부 없음',
+        message: `${message || ''}\n[시스템 자동 발송 / 수신처: ${targetEmail}]`,
       });
 
       setSubmitted(true);
-    } catch (err) {
+      if (!res.emailSent && res.message) {
+        setSubmitError(res.message);
+      }
+    } catch (err: any) {
       console.error('Quote modal submission error:', err);
       addInquiry({
         companyName: companyName || '(주)백송이엔지 견적요청 고객',
@@ -86,8 +89,8 @@ export const QuoteCalculatorModal: React.FC = () => {
         category: '도면/요청사항 참조',
         material: '도면/요청사항 참조',
         quantity: '도면/요청사항 참조',
-        drawingFileName: file ? file.name : '도면 파일 첨부 완료',
-        message,
+        drawingFileName: file ? file.name : '도면 파일 첨부 없음',
+        message: `${message || ''}\n[시스템 내부 접수 완료 / 수신처: ${targetEmail}]`,
       });
       setSubmitted(true);
     } finally {
@@ -126,12 +129,18 @@ export const QuoteCalculatorModal: React.FC = () => {
             <p className="text-xs text-slate-600 leading-relaxed">
               {t.quoteModal.successDesc}
               <br />
-              <strong className="text-emerald-700">수신 이메일: {companyInfo.email}</strong>
+              <strong className="text-emerald-700">회사 수신 이메일: {companyInfo.email || 'baeksong_eng@naver.com'}</strong>
             </p>
+            {submitError && (
+              <p className="text-[11px] text-slate-600 bg-slate-100 p-2.5 rounded-xl border border-slate-200 leading-relaxed">
+                {submitError}
+              </p>
+            )}
             <button
               onClick={() => {
                 setIsQuoteModalOpen(false);
                 setSubmitted(false);
+                setSubmitError(null);
               }}
               className="px-6 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-md shadow-emerald-600/20"
             >

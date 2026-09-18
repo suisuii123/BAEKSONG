@@ -152,19 +152,32 @@ function escapeXml(unsafe: string): string {
   });
 }
 
+// sitemap 파일 생성 및 저장 함수
+export function updateSitemapFiles(): string {
+  const sitemapContent = generateSitemapXml();
+  try {
+    const publicPath = path.resolve(process.cwd(), 'public', 'sitemap.xml');
+    fs.writeFileSync(publicPath, sitemapContent, 'utf-8');
+  } catch (e) {
+    console.warn('[SEO] Failed to update public/sitemap.xml:', e);
+  }
+
+  try {
+    const distDir = path.resolve(process.cwd(), 'dist');
+    if (fs.existsSync(distDir)) {
+      const distPath = path.resolve(distDir, 'sitemap.xml');
+      fs.writeFileSync(distPath, sitemapContent, 'utf-8');
+    }
+  } catch (e) {
+    console.warn('[SEO] Failed to update dist/sitemap.xml:', e);
+  }
+  return sitemapContent;
+}
+
 // 직접 스크립트 실행 시 파일 생성
 function run() {
-  const sitemapContent = generateSitemapXml();
-  const publicPath = path.resolve(process.cwd(), 'public', 'sitemap.xml');
-  fs.writeFileSync(publicPath, sitemapContent, 'utf-8');
-  console.log(`[SEO] sitemap.xml generated successfully at ${publicPath}`);
-
-  const distDir = path.resolve(process.cwd(), 'dist');
-  if (fs.existsSync(distDir)) {
-    const distPath = path.resolve(distDir, 'sitemap.xml');
-    fs.writeFileSync(distPath, sitemapContent, 'utf-8');
-    console.log(`[SEO] sitemap.xml copied to ${distPath}`);
-  }
+  updateSitemapFiles();
+  console.log(`[SEO] sitemap.xml updated successfully.`);
 }
 
 run();

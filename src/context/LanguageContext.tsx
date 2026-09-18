@@ -256,7 +256,7 @@ export const translations: Record<Language, Translations> = {
       fileHint: '클릭하여 파일 선택 또는 드래그 앤 드롭',
       message: '요청 사항 및 수량/재질 세부 설명',
       submitBtn: '이메일 전송',
-      successMsg: '도면 파일 및 견적 요청서가 이메일(kcyexr@naver.com)로 접수되었습니다!',
+      successMsg: '도면 파일 및 견적 요청서가 이메일(baeksong_eng@naver.com)로 접수되었습니다!',
     },
     quoteModal: {
       modalTitle: '이메일 도면 파일 첨부 견적 요청',
@@ -397,7 +397,7 @@ export const translations: Record<Language, Translations> = {
       fileHint: 'Click to select drawing file or drag and drop',
       message: 'Requirements, Quantity & Material Details',
       submitBtn: 'Send Email',
-      successMsg: 'Your drawing file and quote request have been received via email (kcyexr@naver.com)!',
+      successMsg: 'Your drawing file and quote request have been received via email (baeksong_eng@naver.com)!',
     },
     quoteModal: {
       modalTitle: 'Email Drawing File Quote Request',
@@ -538,7 +538,7 @@ export const translations: Record<Language, Translations> = {
       fileHint: '点击选择图纸文件或拖拽上传',
       message: '需求说明/数量/材质等详细说明',
       submitBtn: '发送邮件',
-      successMsg: '图纸文件及报价申请已成功通过邮件(kcyexr@naver.com)接收！',
+      successMsg: '图纸文件及报价申请已成功通过邮件(baeksong_eng@naver.com)接收！',
     },
     quoteModal: {
       modalTitle: '邮件附带图纸报价申请',

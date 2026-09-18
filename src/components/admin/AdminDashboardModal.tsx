@@ -257,49 +257,37 @@ export const AdminDashboardModal: React.FC = () => {
   const [isTranslating, setIsTranslating] = useState<boolean>(false);
   const [translationNotice, setTranslationNotice] = useState<string | null>(null);
 
-  // Formspree Test State
-  const [isTestingFormspree, setIsTestingFormspree] = useState<boolean>(false);
-  const [formspreeTestResult, setFormspreeTestResult] = useState<{ success: boolean; msg: string } | null>(null);
+  // System Email Test State
+  const [isTestingEmail, setIsTestingEmail] = useState<boolean>(false);
+  const [emailTestResult, setEmailTestResult] = useState<{ success: boolean; msg: string } | null>(null);
 
-  const handleTestFormspree = async () => {
-    setIsTestingFormspree(true);
-    setFormspreeTestResult(null);
+  const handleTestSystemEmail = async () => {
+    setIsTestingEmail(true);
+    setEmailTestResult(null);
     try {
-      const endpoint = companyInfo.formspreeUrl || DEFAULT_FORMSPREE_ENDPOINT;
-      const res = await submitToFormspree(
-        {
-          companyName: '(주)백송이엔지 [관리자 테스트 전송]',
-          contactName: '관리자 테스트',
-          phone: companyInfo.phone,
-          email: companyInfo.email,
-          category: 'Formspree 연동 테스트',
-          material: 'TEST',
-          quantity: '1 EA',
-          drawingFileName: 'test_connection.pdf',
-          message: `Formspree 연동이 정상적으로 작동하고 있습니다.\n테스트 일시: ${new Date().toLocaleString()}`,
-          source: '관리자 CMS 테스트 발송',
-        },
-        endpoint
-      );
-
-      if (res.success) {
-        setFormspreeTestResult({
+      const response = await fetch('/api/test-email', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+      });
+      const data = await response.json().catch(() => ({}));
+      if (data.emailSent) {
+        setEmailTestResult({
           success: true,
-          msg: `Formspree (${endpoint}) 연동이 정상 확인되었습니다! 테스트 메일이 발송되었습니다.`,
+          msg: `테스트 이메일 발송 성공! 회사 수신 메일(${companyInfo.email || 'baeksong_eng@naver.com'}) 수신함을 확인해 주세요.`,
         });
       } else {
-        setFormspreeTestResult({
-          success: false,
-          msg: `Formspree 전송 실패: ${res.message || '엔드포인트를 확인해주세요.'}`,
+        setEmailTestResult({
+          success: data.success,
+          msg: data.message || '이메일 발송 상태를 확인해 주세요.',
         });
       }
     } catch (err: any) {
-      setFormspreeTestResult({
+      setEmailTestResult({
         success: false,
-        msg: `오류 발생: ${err.message}`,
+        msg: `테스트 요청 오류: ${err.message}`,
       });
     } finally {
-      setIsTestingFormspree(false);
+      setIsTestingEmail(false);
     }
   };
 
@@ -4432,62 +4420,64 @@ export const AdminDashboardModal: React.FC = () => {
                 </div>
               </div>
 
-              {/* Formspree Data Collection Configuration */}
+              {/* System Automated Email Configuration */}
               <div className="space-y-4 bg-gradient-to-br from-emerald-50 to-teal-50/70 p-5 rounded-2xl border border-emerald-200">
                 <div className="flex flex-wrap items-center justify-between gap-3">
                   <h4 className="text-sm font-bold text-emerald-950 flex items-center gap-2">
                     <Inbox className="w-4 h-4 text-emerald-700" />
-                    <span>Formspree 웹사이트 데이터 수집 연동 설정</span>
+                    <span>백송이엔지 자체 시스템 이메일 자동 발송 설정</span>
                   </h4>
                   <span className="px-2.5 py-0.5 rounded-full bg-emerald-600 text-white font-mono text-[10px] font-bold">
-                    CONNECTED & ACTIVE
+                    SYSTEM DIRECT EMAIL ACTIVE
                   </span>
                 </div>
 
                 <p className="text-[11px] text-emerald-800 leading-relaxed">
-                  홈페이지의 <strong>'이메일 상담'</strong> 모달 및 <strong>'오시는길 & 도면견적'</strong> 양식에 고객이 입력한 모든 데이터(회사명, 담당자명, 연락처, 이메일, 첨부도면, 요청사항 등)가 아래 Formspree 엔드포인트를 통해 실시간으로 수집 및 이메일 전송됩니다.
+                  외부 중계 서비스(Formspree 등) 없이, 고객이 홈페이지에서 <strong>'이메일 상담'</strong> 또는 <strong>'도면 견적'</strong>을 접수하면 백송이엔지 시스템 서버가 직접 회사 공식 메일(<strong>{companyInfo.email || 'baeksong_eng@naver.com'}</strong>)로 자동 발송합니다.
+                  또한 모든 접수 내역은 홈페이지 관리자 모드의 [실시간 수주 및 도면 견적 문의함] 탭에도 실시간 영구 보관됩니다.
                 </p>
 
-                <div className="space-y-2">
-                  <label className="block text-emerald-900 font-bold text-xs">Formspree 엔드포인트 URL</label>
-                  <div className="flex items-center gap-2">
-                    <input
-                      type="text"
-                      value={companyInfo.formspreeUrl || DEFAULT_FORMSPREE_ENDPOINT}
-                      onChange={(e) => updateCompanyInfo({ formspreeUrl: e.target.value })}
-                      className="flex-1 px-3.5 py-2.5 rounded-xl bg-white border border-emerald-300 text-slate-900 font-mono text-xs focus:ring-2 focus:ring-emerald-400 focus:outline-none"
-                      placeholder="https://formspree.io/f/xgawngpn"
-                    />
-                    <button
-                      type="button"
-                      onClick={handleTestFormspree}
-                      disabled={isTestingFormspree}
-                      className="px-4 py-2.5 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white font-bold text-xs flex items-center gap-1.5 transition-all shadow-sm disabled:opacity-50 cursor-pointer shrink-0"
-                    >
-                      {isTestingFormspree ? (
-                        <>
-                          <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                          <span>연동 테스트 중...</span>
-                        </>
-                      ) : (
-                        <>
-                          <Check className="w-3.5 h-3.5" />
-                          <span>연동 테스트 전송</span>
-                        </>
-                      )}
-                    </button>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+                  <div className="p-3 bg-white rounded-xl border border-emerald-200 text-xs">
+                    <span className="text-slate-500 text-[11px] block">회사 수신 메일함</span>
+                    <strong className="text-emerald-900 font-mono text-sm">{companyInfo.email || 'baeksong_eng@naver.com'}</strong>
+                  </div>
+                  <div className="p-3 bg-white rounded-xl border border-emerald-200 text-xs">
+                    <span className="text-slate-500 text-[11px] block">이메일 발송 엔진</span>
+                    <strong className="text-slate-800 font-mono text-sm">백송이엔지 Express Node.js Mailer</strong>
                   </div>
                 </div>
 
-                {formspreeTestResult && (
+                <div className="flex items-center gap-2 pt-2">
+                  <button
+                    type="button"
+                    onClick={handleTestSystemEmail}
+                    disabled={isTestingEmail}
+                    className="px-4 py-2.5 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white font-bold text-xs flex items-center gap-1.5 transition-all shadow-sm disabled:opacity-50 cursor-pointer"
+                  >
+                    {isTestingEmail ? (
+                      <>
+                        <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                        <span>테스트 발송 중...</span>
+                      </>
+                    ) : (
+                      <>
+                        <Check className="w-3.5 h-3.5" />
+                        <span>시스템 이메일 테스트 발송</span>
+                      </>
+                    )}
+                  </button>
+                </div>
+
+                {emailTestResult && (
                   <div
                     className={`p-3 rounded-xl text-xs font-semibold flex items-center gap-2 ${
-                      formspreeTestResult.success
+                      emailTestResult.success
                         ? 'bg-emerald-100 text-emerald-900 border border-emerald-300'
-                        : 'bg-red-100 text-red-900 border border-red-300'
+                        : 'bg-amber-100 text-amber-900 border border-amber-300'
                     }`}
                   >
-                    <span>{formspreeTestResult.msg}</span>
+                    <span>{emailTestResult.msg}</span>
                   </div>
                 )}
               </div>
@@ -4505,7 +4495,7 @@ export const AdminDashboardModal: React.FC = () => {
 
                 <div className="flex items-center gap-2">
                   <span className="text-[11px] text-emerald-700 font-bold bg-emerald-50 px-3 py-1 rounded-xl border border-emerald-200">
-                    Formspree 수신 연동 중 ({companyInfo.formspreeUrl || DEFAULT_FORMSPREE_ENDPOINT})
+                    시스템 자체 직발송 연동 중 ({companyInfo.email || 'baeksong_eng@naver.com'})
                   </span>
                 </div>
               </div>

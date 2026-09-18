@@ -35,7 +35,7 @@ export async function uploadImageToStorage(
       const storageRef = ref(storage, `${folder}/${filename}`);
 
       const snapshot = await uploadBytes(storageRef, imageInput, {
-        contentType: imageInput.type || 'image/jpeg',
+        contentType: imageInput.type || 'application/octet-stream',
       });
 
       const downloadUrl = await getDownloadURL(snapshot.ref);
