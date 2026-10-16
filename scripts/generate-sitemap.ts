@@ -154,6 +154,7 @@ function escapeXml(unsafe: string): string {
 
 // sitemap 파일 생성 및 저장 함수
 export function updateSitemapFiles(): string {
+  const allProducts = getAllProducts();
   const sitemapContent = generateSitemapXml();
   try {
     const publicPath = path.resolve(process.cwd(), 'public', 'sitemap.xml');
@@ -171,13 +172,126 @@ export function updateSitemapFiles(): string {
   } catch (e) {
     console.warn('[SEO] Failed to update dist/sitemap.xml:', e);
   }
+
+  // index.html 크롤러 전용 마크업 및 Schema.org 제품 구조화 데이터 자동 동기화
+  try {
+    syncIndexHtmlWithProducts(allProducts);
+  } catch (e) {
+    console.warn('[SEO] Failed to sync index.html with products:', e);
+  }
+
   return sitemapContent;
+}
+
+export function syncIndexHtmlWithProducts(productsList: SitemapProduct[]): void {
+  const schemaProducts = {
+    "@context": "https://schema.org",
+    "@type": "ItemList",
+    "@id": "https://www.baeksongeng.com/#products-catalog",
+    "name": "백송이엔지 반도체 장비 메탈 부품 정밀가공 품목",
+    "description": "Tokyo Electron(TEL), Applied Materials(AMAT), LAM Research 반도체 장비 200mm/300mm 메탈 부품 초정밀 가공 카탈로그",
+    "numberOfItems": productsList.length,
+    "itemListElement": productsList.map((product, idx) => {
+      const pn = product.pn;
+      const rawImgSrc = getProductImageSrc(product);
+      const fullImgUrl = rawImgSrc.startsWith('http')
+        ? rawImgSrc
+        : `${BASE_URL}/${rawImgSrc.replace(/^\//, '')}`;
+      return {
+        "@type": "Product",
+        "position": idx + 1,
+        "name": `${pn} ${product.name}`,
+        "image": fullImgUrl,
+        "description": `${pn} ${product.name} (${product.maker || 'Applied Materials'}) - ${product.spec || '반도체 장비 메탈 부품 정밀가공 (주)백송이엔지'}`,
+        "sku": pn,
+        "mpn": pn,
+        "brand": {
+          "@type": "Brand",
+          "name": product.maker || "Applied Materials"
+        },
+        "offers": {
+          "@type": "Offer",
+          "price": "0",
+          "priceCurrency": "KRW",
+          "availability": "https://schema.org/InStock",
+          "url": `${BASE_URL}/?pn=${encodeURIComponent(pn)}`
+        }
+      };
+    })
+  };
+
+  const schemaJsonLd = `<!-- START_SCHEMA_PRODUCT_JSONLD -->
+    <script type="application/ld+json" id="schema-products-catalog">
+${JSON.stringify(schemaProducts, null, 2)}
+    </script>
+    <!-- END_SCHEMA_PRODUCT_JSONLD -->`;
+
+  const crawlerArticles = productsList.map((product) => {
+    const pn = product.pn;
+    const rawImgSrc = getProductImageSrc(product);
+    const fullImgUrl = rawImgSrc.startsWith('http')
+      ? rawImgSrc
+      : `${BASE_URL}/${rawImgSrc.replace(/^\//, '')}`;
+    const altText = getProductImageAlt(product);
+    return `        <article class="product-seo-item">
+          <h3>${escapeXml(pn)} - ${escapeXml(product.name)} (${escapeXml(product.maker || '')})</h3>
+          <img src="${escapeXml(fullImgUrl)}" alt="${escapeXml(altText)}" width="600" height="400" loading="eager" />
+          <p><strong>부품번호(P/N):</strong> ${escapeXml(pn)}</p>
+          <p><strong>설비/제조사:</strong> ${escapeXml(product.maker || '')}</p>
+          <p><strong>규격 및 특징:</strong> ${escapeXml(product.spec || product.name)}</p>
+          <a href="https://www.baeksongeng.com/?pn=${encodeURIComponent(pn)}">상세 사양 및 가공 견적 문의</a>
+        </article>`;
+  }).join('\n');
+
+  const crawlerHtml = `<!-- START_SEO_PRODUCT_CRAWLER_CATALOG -->
+    <noscript>
+      <section aria-label="반도체 장비 메탈 부품 정밀가공 제품 목록 (P/N 카탈로그)">
+        <h2>(주)백송이엔지 반도체 장비 정밀가공 부품 카탈로그</h2>
+        <p>TEL, AMAT, LAM 200mm/300mm 챔버 바디, 라이너, 플레이트, 디퓨저 등 핵심 메탈 부품 초정밀 5축 가공</p>
+        <div class="product-crawler-list">
+${crawlerArticles}
+        </div>
+      </section>
+    </noscript>
+    <section class="sr-only" aria-label="반도체 장비 메탈 부품 정밀가공 제품 목록 (P/N 카탈로그)">
+      <h2>(주)백송이엔지 반도체 장비 정밀가공 부품 카탈로그</h2>
+      <div class="product-crawler-list">
+${crawlerArticles}
+      </div>
+    </section>
+    <!-- END_SEO_PRODUCT_CRAWLER_CATALOG -->`;
+
+  const targetFiles = [
+    path.resolve(process.cwd(), 'index.html'),
+    path.resolve(process.cwd(), 'dist', 'index.html')
+  ];
+
+  for (const filePath of targetFiles) {
+    if (!fs.existsSync(filePath)) continue;
+    let html = fs.readFileSync(filePath, 'utf-8');
+
+    // 1. Schema.org JSON-LD 주입 또는 교체
+    if (html.includes('<!-- START_SCHEMA_PRODUCT_JSONLD -->')) {
+      html = html.replace(/<!-- START_SCHEMA_PRODUCT_JSONLD -->[\s\S]*?<!-- END_SCHEMA_PRODUCT_JSONLD -->/, schemaJsonLd);
+    } else {
+      html = html.replace('</head>', `  ${schemaJsonLd}\n  </head>`);
+    }
+
+    // 2. 크롤러용 Fallback HTML 마크업 주입 또는 교체
+    if (html.includes('<!-- START_SEO_PRODUCT_CRAWLER_CATALOG -->')) {
+      html = html.replace(/<!-- START_SEO_PRODUCT_CRAWLER_CATALOG -->[\s\S]*?<!-- END_SEO_PRODUCT_CRAWLER_CATALOG -->/, crawlerHtml);
+    } else {
+      html = html.replace('</nav>', `</nav>\n    ${crawlerHtml}`);
+    }
+
+    fs.writeFileSync(filePath, html, 'utf-8');
+  }
 }
 
 // 직접 스크립트 실행 시 파일 생성
 function run() {
   updateSitemapFiles();
-  console.log(`[SEO] sitemap.xml updated successfully.`);
+  console.log(`[SEO] sitemap.xml and index.html crawler catalog updated successfully.`);
 }
 
 run();
